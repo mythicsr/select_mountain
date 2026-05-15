@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>本周爬哪座山？广州随机选择器</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --green: #6dffad;
+      --cyan: #6ee7ff;
+      --gold: #ffd36e;
+      --pink: #ff66c4;
+      --red: #ff6b6b;
+      --bg: #050816;
+      --card: rgba(12, 20, 45, 0.72);
+      --line: rgba(255, 255, 255, 0.18);
+      --text: #f7fbff;
+      --muted: rgba(247, 251, 255, 0.68);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(91, 141, 255, 0.32), transparent 28%),
+        radial-gradient(circle at 82% 15%, rgba(255, 102, 196, 0.24), transparent 30%),
+        radial-gradient(circle at 50% 95%, rgba(109, 255, 173, 0.18), transparent 32%),
+        linear-gradient(135deg, #030511 0%, #091634 48%, #051018 100%);
+    }
+
+    body::before,
+    body::after {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: -2;
+      height: 42vh;
+      content: "";
+      background: linear-gradient(140deg, transparent 11%, rgba(17, 80, 82, 0.72) 12% 21%, transparent 22%),
+        linear-gradient(155deg, transparent 0 24%, rgba(17, 96, 77, 0.76) 25% 40%, transparent 41%),
+        linear-gradient(130deg, transparent 0 38%, rgba(13, 59, 79, 0.8) 39% 52%, transparent 53%),
+        linear-gradient(160deg, transparent 0 57%, rgba(10, 41, 65, 0.88) 58% 74%, transparent 75%);
+      filter: drop-shadow(0 -22px 60px rgba(109, 255, 173, 0.12));
+      animation: floatRange 9s ease-in-out infinite alternate;
+    }
+
+    body::after {
+      z-index: -3;
+      height: 52vh;
+      opacity: 0.5;
+      transform: translateY(26px) scaleX(1.08);
+      animation-duration: 13s;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.8px),
+        radial-gradient(circle, rgba(109, 231, 255, 0.7) 0 1px, transparent 1.8px);
+      background-position: 0 0, 42px 78px;
+      background-size: 116px 116px, 162px 162px;
+      opacity: 0.42;
+      animation: starDrift 22s linear infinite;
+    }
+
+    .shell {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 36px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      margin: 0 auto;
+      padding: 8px 14px;
+      border: 1px solid rgba(109, 231, 255, 0.38);
+      border-radius: 999px;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: rgba(6, 13, 31, 0.48);
+      box-shadow: 0 0 24px rgba(109, 231, 255, 0.18);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.35rem, 7vw, 5.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      text-shadow:
+        0 0 18px rgba(109, 231, 255, 0.5),
+        0 0 52px rgba(255, 102, 196, 0.28);
+    }
+
+    .lead {
+      max-width: 680px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      line-height: 1.7;
+    }
+
+    .machine {
+      position: relative;
+      margin-top: 28px;
+      padding: clamp(18px, 4vw, 34px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent),
+        rgba(8, 13, 31, 0.78);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 32px 120px rgba(0, 0, 0, 0.44),
+        0 0 90px rgba(109, 231, 255, 0.13);
+      backdrop-filter: blur(22px);
+    }
+
+    .machine::before {
+      position: absolute;
+      inset: -45%;
+      content: "";
+      background: conic-gradient(from 140deg, transparent, rgba(109, 231, 255, 0.2), transparent, rgba(255, 102, 196, 0.16), transparent);
+      animation: spinGlow 12s linear infinite;
+    }
+
+    .machine > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .reel-wrap {
+      position: relative;
+      height: clamp(260px, 44vw, 430px);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(5, 8, 22, 0.96), rgba(13, 31, 62, 0.8)),
+        radial-gradient(circle at center, rgba(109, 255, 173, 0.2), transparent 55%);
+      perspective: 960px;
+    }
+
+    .reel-wrap::before,
+    .reel-wrap::after {
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 3;
+      height: 34%;
+      content: "";
+      pointer-events: none;
+    }
+
+    .reel-wrap::before {
+      top: 0;
+      background: linear-gradient(180deg, #050816 0%, rgba(5, 8, 22, 0.78) 44%, transparent);
+    }
+
+    .reel-wrap::after {
+      bottom: 0;
+      background: linear-gradient(0deg, #050816 0%, rgba(5, 8, 22, 0.78) 44%, transparent);
+    }
+
+    .target-line {
+      position: absolute;
+      left: clamp(14px, 3vw, 38px);
+      right: clamp(14px, 3vw, 38px);
+      top: 50%;
+      z-index: 2;
+      height: 92px;
+      border: 1px solid rgba(109, 231, 255, 0.42);
+      border-radius: 24px;
+      transform: translateY(-50%);
+      box-shadow:
+        inset 0 0 34px rgba(109, 231, 255, 0.1),
+        0 0 34px rgba(109, 231, 255, 0.18);
+    }
+
+    .target-line::before,
+    .target-line::after {
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      content: "";
+      border-top: 3px solid var(--gold);
+      border-right: 3px solid var(--gold);
+      filter: drop-shadow(0 0 10px rgba(255, 211, 110, 0.7));
+    }
+
+    .target-line::before {
+      left: -7px;
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .target-line::after {
+      right: -7px;
+      transform: translateY(-50%) rotate(225deg);
+    }
+
+    .reel {
+      width: min(860px, 92%);
+      transform-style: preserve-3d;
+    }
+
+    .reel-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 78px;
+      margin: 10px 0;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: transform 0.16s ease, opacity 0.16s ease, filter 0.16s ease;
+    }
+
+    .rolling .reel-item {
+      filter: blur(0.4px);
+    }
+
+    .reel-item strong {
+      display: block;
+      overflow: hidden;
+      font-size: clamp(1.05rem, 3.1vw, 1.7rem);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .reel-item span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .easy {
+      color: #062416;
+      background: var(--green);
+    }
+
+    .normal {
+      color: #2b1900;
+      background: var(--gold);
+    }
+
+    .hard {
+      color: #2e0303;
+      background: var(--red);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .draw-btn {
+      min-width: 220px;
+      padding: 18px 28px;
+      border-radius: 999px;
+      color: #031019;
+      background: linear-gradient(135deg, var(--green), var(--cyan), var(--gold));
+      box-shadow:
+        0 14px 42px rgba(109, 231, 255, 0.26),
+        0 0 26px rgba(109, 255, 173, 0.32);
+      transform: translateY(0);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      animation: buttonPulse 1.8s ease-in-out infinite;
+    }
+
+    .draw-btn:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow:
+        0 18px 54px rgba(109, 231, 255, 0.34),
+        0 0 38px rgba(109, 255, 173, 0.48);
+    }
+
+    .draw-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+      animation: none;
+    }
+
+    .ghost-btn {
+      padding: 16px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .status {
+      min-height: 28px;
+      margin: 18px 0 0;
+      color: var(--cyan);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .result {
+      display: none;
+      margin-top: 24px;
+      padding: clamp(20px, 4vw, 30px);
+      border: 1px solid rgba(109, 255, 173, 0.28);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(109, 255, 173, 0.14), rgba(109, 231, 255, 0.09)),
+        var(--card);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32), 0 0 60px rgba(109, 255, 173, 0.14);
+      transform-origin: center top;
+    }
+
+    .result.show {
+      display: block;
+      animation: cardIn 0.7s cubic-bezier(0.17, 0.84, 0.44, 1.18);
+    }
+
+    .result-kicker {
+      color: var(--gold);
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .result h2 {
+      margin: 8px 0 14px;
+      font-size: clamp(1.7rem, 5vw, 3.5rem);
+      line-height: 1.05;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .meta {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .meta b {
+      display: block;
+      font-size: 1.32rem;
+    }
+
+    .meta span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .trail-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .trail-chip {
+      padding: 13px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.055);
+      font-size: 0.9rem;
+    }
+
+    .trail-chip b {
+      display: block;
+      color: var(--text);
+      font-size: 0.98rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .confetti {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    @keyframes floatRange {
+      from { transform: translateY(0); }
+      to { transform: translateY(18px); }
+    }
+
+    @keyframes starDrift {
+      to { background-position: 280px 180px, -140px 260px; }
+    }
+
+    @keyframes spinGlow {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes buttonPulse {
+      0%, 100% { filter: saturate(1); }
+      50% { filter: saturate(1.4) brightness(1.08); }
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(22px) rotateX(-16deg) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0) scale(1);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 22px, 1080px);
+        padding-top: 28px;
+      }
+
+      .reel-item {
+        grid-template-columns: 1fr;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .target-line {
+        height: 116px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="title">
+      <div class="eyebrow">Guangzhou Weekend Hiking</div>
+      <h1 id="title">本周爬哪座山？</h1>
+      <p class="lead">把广州可爬线路丢进随机机器，滚动 5 秒，交给山神决定周末路线。轻松、标准、困难都可能中奖。</p>
+    </section>
+
+    <section class="machine" aria-label="广州爬山随机选择器">
+      <div class="reel-wrap" id="reelWrap">
+        <div class="target-line" aria-hidden="true"></div>
+        <div class="reel" id="reel"></div>
+      </div>
+
+      <p class="status" id="status">准备就绪，点击开始抽山</p>
+
+      <div class="controls">
+        <button class="draw-btn" id="drawBtn" type="button">开始抽山</button>
+        <button class="ghost-btn" id="shuffleBtn" type="button">先洗牌一下</button>
+      </div>
+
+      <article class="result" id="result" aria-live="polite">
+        <div class="result-kicker">本周命定路线</div>
+        <h2 id="resultName"></h2>
+        <span class="badge" id="resultDifficulty"></span>
+        <div class="meta-grid">
+          <div class="meta">
+            <b id="resultDistance"></b>
+            <span>线路距离</span>
+          </div>
+          <div class="meta">
+            <b id="resultClimb"></b>
+            <span>累计爬升</span>
+          </div>
+          <div class="meta">
+            <b id="resultTime"></b>
+            <span>参考耗时</span>
+          </div>
+          <div class="meta">
+            <b id="resultSeason"></b>
+            <span>适合月份</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="trail-list" id="trailList" aria-label="候选线路列表"></section>
+  </main>
+
+  <script>
+    const trails = [
+      { name: "广州暹岗大山-黄陂徒步线", distance: "10.28 公里", climb: "619 米", time: "03:57", season: "1-12月", difficulty: "标准" },
+      { name: "广州大夫山往返线（北门）", distance: "3.75 公里", climb: "234 米", time: "01:30", season: "1-12月", difficulty: "轻松" },
+      { name: "广州油麻山（金坑-华峰）", distance: "8.27 公里", climb: "628 米", time: "02:37", season: "1-12月", difficulty: "标准" },
+      { name: "广州帽峰山-甜橙农庄环线", distance: "5.36 公里", climb: "344 米", time: "01:24", season: "3-7月", difficulty: "轻松" },
+      { name: "广州番禺滴水岩森林公园亲子线", distance: "6.50 公里", climb: "366 米", time: "02:58", season: "1-12月", difficulty: "标准" },
+      { name: "广州火炉山皮卡丘-天鹿湖画心徒步线", distance: "25.52 公里", climb: "1464 米", time: "06:11", season: "1-12月", difficulty: "标准" },
+      { name: "广州白云山-六片山徒步线", distance: "11.05 公里", climb: "378 米", time: "02:30", season: "7-12月", difficulty: "轻松" },
+      { name: "广州东平六片山徒步线", distance: "6.53 公里", climb: "290 米", time: "01:47", season: "1-12月", difficulty: "标准" },
+      { name: "广州金麦线（金坑-麦村）", distance: "11.35 公里", climb: "765 米", time: "02:29", season: "5月", difficulty: "标准" },
+      { name: "广州白云山徒步线（水流东-六片山）", distance: "9.54 公里", climb: "473 米", time: "02:35", season: "1-12月", difficulty: "标准" },
+      { name: "广州六片山登山线", distance: "9.76 公里", climb: "462 米", time: "03:14", season: "4月", difficulty: "标准" },
+      { name: "广州黄麻线（长岭国家登山健身步道）", distance: "10.77 公里", climb: "689 米", time: "01:58", season: "1-12月", difficulty: "轻松" },
+      { name: "广州牛牯嶂徒步线（大水管-牛牯嶂）", distance: "11.45 公里", climb: "1065 米", time: "03:42", season: "1-3,7-12月", difficulty: "标准" },
+      { name: "广州黄埔牛木外线（黄陂-木强水库）", distance: "18.94 公里", climb: "1054 米", time: "06:01", season: "1-12月", difficulty: "标准" },
+      { name: "广州长岭线（长平-永顺大道）", distance: "12.05 公里", climb: "525 米", time: "03:11", season: "1-12月", difficulty: "轻松" },
+      { name: "广州火炉山小环线（凤凰台）", distance: "7.36 公里", climb: "413 米", time: "02:34", season: "1-5,10-12月", difficulty: "轻松" },
+      { name: "广州火龙渔亲子线（火炉山公园-渔东路）", distance: "14.12 公里", climb: "771 米", time: "04:49", season: "1-12月", difficulty: "轻松" },
+      { name: "广州鸡啼山环线", distance: "10.53 公里", climb: "486 米", time: "01:56", season: "2-4月", difficulty: "标准" },
+      { name: "广州火炉山-凤凰山徒步线", distance: "10.93 公里", climb: "633 米", time: "03:46", season: "1-12月", difficulty: "轻松" },
+      { name: "广州黄麻村湖溪小环线（长岭国家健康步道）", distance: "3.62 公里", climb: "111 米", time: "01:27", season: "1-12月", difficulty: "轻松" },
+      { name: "广州白云山亲子线（永泰-西门）", distance: "7.82 公里", climb: "301 米", time: "01:26", season: "1-12月", difficulty: "轻松" },
+      { name: "广州龙渔线（龙眼洞森林公园南门-龙洞水库）", distance: "13.51 公里", climb: "719 米", time: "06:03", season: "1-12月", difficulty: "轻松" },
+      { name: "广州云道（中山纪念堂-云台花园）", distance: "9.05 公里", climb: "219 米", time: "02:07", season: "1-12月", difficulty: "轻松" },
+      { name: "广州龙渔线-简易版", distance: "8.88 公里", climb: "383 米", time: "02:25", season: "1-12月", difficulty: "轻松" },
+      { name: "广州油麻山环线（石牙顶天坑）", distance: "18.66 公里", climb: "1028 米", time: "05:27", season: "3-5,10-11月", difficulty: "标准" },
+      { name: "广州从化天堂顶（大坪-影古驿站）", distance: "16.30 公里", climb: "1129 米", time: "04:32", season: "9-10月", difficulty: "标准" },
+      { name: "广州牛牯嶂小环线（大猪兜水库）", distance: "6.14 公里", climb: "540 米", time: "02:00", season: "1-12月", difficulty: "标准" },
+      { name: "广州黄麻线（长岭国家登山健身步道）短线", distance: "6.17 公里", climb: "287 米", time: "02:10", season: "1-12月", difficulty: "轻松" },
+      { name: "广州牛木线穿黄麻山", distance: "10.26 公里", climb: "537 米", time: "02:49", season: "1-12月", difficulty: "标准" },
+      { name: "广州六片山徒步永泰环线", distance: "16.82 公里", climb: "830 米", time: "04:05", season: "1-4月", difficulty: "困难" },
+      { name: "广州六片山环线", distance: "5.01 公里", climb: "237 米", time: "02:16", season: "1-12月", difficulty: "轻松" },
+      { name: "广州牛木线（牛头山-木强水库）", distance: "16.12 公里", climb: "844 米", time: "05:20", season: "1-12月", difficulty: "标准" }
+    ];
+
+    const reel = document.querySelector("#reel");
+    const reelWrap = document.querySelector("#reelWrap");
+    const trailList = document.querySelector("#trailList");
+    const drawBtn = document.querySelector("#drawBtn");
+    const shuffleBtn = document.querySelector("#shuffleBtn");
+    const statusText = document.querySelector("#status");
+    const result = document.querySelector("#result");
+    const resultName = document.querySelector("#resultName");
+    const resultDifficulty = document.querySelector("#resultDifficulty");
+    const resultDistance = document.querySelector("#resultDistance");
+    const resultClimb = document.querySelector("#resultClimb");
+    const resultTime = document.querySelector("#resultTime");
+    const resultSeason = document.querySelector("#resultSeason");
+    const canvas = document.querySelector("#confetti");
+    const ctx = canvas.getContext("2d");
+
+    let currentTrails = [...trails];
+    let isRolling = false;
+    let particles = [];
+    let animationFrame = null;
+
+    function difficultyClass(difficulty) {
+      return {
+        "轻松": "easy",
+        "标准": "normal",
+        "困难": "hard"
+      }[difficulty] || "normal";
+    }
+
+    function shuffle(list) {
+      return list
+        .map((item) => ({ item, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ item }) => item);
+    }
+
+    function renderReel(centerIndex = 0) {
+      const visible = [];
+      for (let offset = -4; offset <= 4; offset += 1) {
+        const index = (centerIndex + offset + currentTrails.length) % currentTrails.length;
+        const trail = currentTrails[index];
+        visible.push({ trail, offset });
+      }
+
+      reel.innerHTML = visible.map(({ trail, offset }) => {
+        const depth = Math.abs(offset);
+        const scale = 1 - depth * 0.055;
+        const opacity = 1 - depth * 0.12;
+        const rotate = offset * -7;
+        return `
+          <div class="reel-item" style="transform: translateY(${offset * 2}px) rotateX(${rotate}deg) scale(${scale}); opacity: ${opacity};">
+            <div>
+              <strong>${trail.name}</strong>
+              <span>${trail.distance} · 爬升 ${trail.climb} · ${trail.time}</span>
+            </div>
+            <span class="badge ${difficultyClass(trail.difficulty)}">${trail.difficulty}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderTrailList() {
+      trailList.innerHTML = currentTrails.map((trail) => `
+        <div class="trail-chip">
+          <b>${trail.name}</b>
+          ${trail.distance} · ${trail.climb} · ${trail.time}
+        </div>
+      `).join("");
+    }
+
+    function showResult(trail) {
+      resultName.textContent = trail.name;
+      resultDifficulty.textContent = trail.difficulty;
+      resultDifficulty.className = `badge ${difficultyClass(trail.difficulty)}`;
+      resultDistance.textContent = trail.distance;
+      resultClimb.textContent = trail.climb;
+      resultTime.textContent = trail.time;
+      resultSeason.textContent = trail.season;
+      result.classList.remove("show");
+      requestAnimationFrame(() => result.classList.add("show"));
+    }
+
+    function pickTrail() {
+      const randomValues = new Uint32Array(1);
+      crypto.getRandomValues(randomValues);
+      return randomValues[0] % currentTrails.length;
+    }
+
+    function roll() {
+      if (isRolling) return;
+
+      isRolling = true;
+      drawBtn.disabled = true;
+      shuffleBtn.disabled = true;
+      result.classList.remove("show");
+      reelWrap.classList.add("rolling");
+      statusText.textContent = "山神正在翻牌中...";
+
+      const targetIndex = pickTrail();
+      const start = performance.now();
+      const duration = 5000;
+      const startIndex = Math.floor(Math.random() * currentTrails.length);
+      const fullRounds = 6 + Math.floor(Math.random() * 4);
+      const totalSteps = fullRounds * currentTrails.length + ((targetIndex - startIndex + currentTrails.length) % currentTrails.length);
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        const step = Math.floor(eased * totalSteps);
+        const index = (startIndex + step) % currentTrails.length;
+
+        renderReel(index);
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+          return;
+        }
+
+        renderReel(targetIndex);
+        const winner = currentTrails[targetIndex];
+        isRolling = false;
+        drawBtn.disabled = false;
+        shuffleBtn.disabled = false;
+        drawBtn.textContent = "再抽一次";
+        reelWrap.classList.remove("rolling");
+        statusText.textContent = "结果已锁定，本周出发！";
+        showResult(winner);
+        burstConfetti();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+
+    function burstConfetti() {
+      const colors = ["#6dffad", "#6ee7ff", "#ffd36e", "#ff66c4", "#ffffff"];
+      particles = Array.from({ length: 180 }, () => ({
+        x: window.innerWidth / 2,
+        y: window.innerHeight * 0.42,
+        vx: (Math.random() - 0.5) * 16,
+        vy: Math.random() * -14 - 3,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: Math.random() * 55 + 65,
+        rotate: Math.random() * Math.PI
+      }));
+
+      if (!animationFrame) animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particles = particles.filter((p) => p.life > 0);
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.28;
+        p.vx *= 0.99;
+        p.life -= 1;
+        p.rotate += 0.16;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotate);
+        ctx.globalAlpha = Math.max(p.life / 80, 0);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.55);
+        ctx.restore();
+      });
+
+      if (particles.length) {
+        animationFrame = requestAnimationFrame(animateConfetti);
+      } else {
+        animationFrame = null;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
+    drawBtn.addEventListener("click", roll);
+    shuffleBtn.addEventListener("click", () => {
+      if (isRolling) return;
+      currentTrails = shuffle(currentTrails);
+      renderReel(0);
+      renderTrailList();
+      statusText.textContent = "已洗牌，山神口味刷新了";
+    });
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+    renderReel(0);
+    renderTrailList();
+  </script>
+</body>
+</html>
