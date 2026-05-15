@@ -36,16 +36,16 @@
 
     /* ── Background image ── */
     .bg-img {
-      position: fixed; inset: -30px; z-index: 0; pointer-events: none;
+      position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none;
+      width: 180%; height: 100%;
       background: url('bg.png') center/cover no-repeat;
-      filter: blur(4px) brightness(.45) saturate(1.15);
-      animation: bgDrift 30s ease-in-out infinite alternate;
+      filter: brightness(.5) saturate(1.2);
+      animation: bgPan 60s linear infinite;
     }
-    @keyframes bgDrift {
-      0%   { transform: scale(1.08) translate(0, 0); }
-      33%  { transform: scale(1.12) translate(-8px, 5px); }
-      66%  { transform: scale(1.10) translate(6px, -4px); }
-      100% { transform: scale(1.06) translate(-3px, 7px); }
+    @keyframes bgPan {
+      0%   { transform: translateX(0); }
+      50%  { transform: translateX(-30%); }
+      100% { transform: translateX(0); }
     }
 
     /* Color overlay on top of image */
@@ -590,23 +590,31 @@
     let particles   = [];
     let raf         = null;
     let audioCtx    = null;
-    let musicOn     = true;
+    let musicOn      = true;
     let musicStarted = false;
+    let userPaused   = false;
 
     bgm.volume       = 0.35;
     sfxLockin.volume  = 0.55;
 
     function startMusicOnce() {
-      if (musicStarted) return;
-      musicStarted = true;
-      musicBtn.classList.remove("muted");
-      musicBtn.classList.add("playing");
-      bgm.play().catch(() => { musicStarted = false; });
+      if (musicStarted || userPaused) return;
+      bgm.play().then(() => {
+        musicStarted = true;
+        musicBtn.classList.remove("muted");
+        musicBtn.classList.add("playing");
+        unbindAutoplay();
+      }).catch(() => {});
     }
 
     function toggleMusic() {
-      if (!musicStarted) { startMusicOnce(); return; }
+      if (!musicStarted) {
+        userPaused = false;
+        startMusicOnce();
+        return;
+      }
       musicOn = !musicOn;
+      userPaused = !musicOn;
       musicBtn.classList.toggle("muted", !musicOn);
       musicBtn.classList.toggle("playing", musicOn);
       if (musicOn) { bgm.play().catch(() => {}); }
@@ -618,7 +626,13 @@
       sfxLockin.play().catch(() => {});
     }
 
-    document.addEventListener("click", startMusicOnce, { once: true });
+    const autoplayEvents = ["click","touchstart","mousemove","keydown","scroll","pointerdown"];
+    function unbindAutoplay() {
+      autoplayEvents.forEach(e => document.removeEventListener(e, startMusicOnce));
+    }
+    autoplayEvents.forEach(e => document.addEventListener(e, startMusicOnce, { once: true, passive: true }));
+    startMusicOnce();
+
     musicBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleMusic(); });
 
     const diffCls = d => ({ "轻松":"easy", "标准":"normal", "困难":"hard" })[d] || "normal";
