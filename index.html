@@ -548,13 +548,26 @@
     let audioCtx    = null;
     let bgmPlaying  = false;
 
-    bgm.volume       = 0.35;
+    const BGM_VOL = 0.35;
+    bgm.volume       = 0;
     sfxLockin.volume  = 0.8;
+
+    function fadeInBgm() {
+      let v = 0;
+      const step = BGM_VOL / 30;
+      const iv = setInterval(() => {
+        v = Math.min(v + step, BGM_VOL);
+        bgm.volume = v;
+        if (v >= BGM_VOL) clearInterval(iv);
+      }, 50);
+    }
 
     function forcePlayBgm() {
       if (bgmPlaying) return;
+      bgm.currentTime = 5;
       bgm.play().then(() => {
         bgmPlaying = true;
+        fadeInBgm();
         unbindAutoplay();
       }).catch(() => {});
     }
