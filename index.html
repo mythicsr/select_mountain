@@ -37,23 +37,22 @@
     /* ── Background image ── */
     .bg-img {
       position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none;
-      width: 180%; height: 100%;
-      background: url('bg.png') center/cover no-repeat;
-      filter: brightness(.5) saturate(1.2);
-      animation: bgPan 60s linear infinite;
+      width: 200%; height: 100%;
+      background: url('bg1.png') center/cover no-repeat;
+      filter: brightness(.55) saturate(1.15);
+      animation: bgPan 25s linear infinite;
     }
     @keyframes bgPan {
       0%   { transform: translateX(0); }
-      50%  { transform: translateX(-30%); }
+      50%  { transform: translateX(-35%); }
       100% { transform: translateX(0); }
     }
 
-    /* Color overlay on top of image */
+    /* Color overlay — light vignette only */
     .bg-overlay {
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background:
-        radial-gradient(ellipse 70% 50% at 50% 30%, transparent 20%, rgba(7,9,26,0.6) 100%),
-        linear-gradient(180deg, rgba(7,9,26,0.3) 0%, rgba(7,9,26,0.55) 60%, rgba(7,9,26,0.85) 100%);
+        radial-gradient(ellipse 80% 60% at 50% 40%, transparent 30%, rgba(7,9,26,0.35) 100%);
     }
 
     /* ── Layout ── */
@@ -108,16 +107,15 @@
     /* ── Machine card ── */
     .card {
       width: 100%;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 28px;
-      background: var(--surface);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      background: rgba(0,0,0,0.22);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: clamp(20px,4vw,36px);
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.06) inset,
-        0 40px 80px rgba(0,0,0,0.5),
-        0 0 60px rgba(157,125,255,0.08);
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 20px 50px rgba(0,0,0,0.3);
       position: relative; overflow: hidden;
     }
     /* Top shimmer stripe */
@@ -132,21 +130,21 @@
       position: relative;
       height: clamp(300px,40vw,440px);
       border-radius: 20px;
-      border: 1px solid rgba(245,200,66,0.25);
+      border: 1px solid rgba(245,200,66,0.2);
       background:
-        radial-gradient(ellipse at center, rgba(245,200,66,0.06) 0%, transparent 65%),
-        rgba(0,0,0,0.45);
+        radial-gradient(ellipse at center, rgba(245,200,66,0.04) 0%, transparent 65%),
+        rgba(0,0,0,0.3);
       overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 0 30px rgba(245,200,66,0.06);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.4), 0 0 20px rgba(245,200,66,0.04);
     }
 
     /* Fade masks */
     .reel-win::before, .reel-win::after {
       content: ""; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none;
     }
-    .reel-win::before { top: 0; height: 36%; background: linear-gradient(to bottom, rgba(7,9,26,1), rgba(7,9,26,0)); }
-    .reel-win::after  { bottom: 0; height: 36%; background: linear-gradient(to top,   rgba(7,9,26,1), rgba(7,9,26,0)); }
+    .reel-win::before { top: 0; height: 36%; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+    .reel-win::after  { bottom: 0; height: 36%; background: linear-gradient(to top,   rgba(0,0,0,0.7), transparent); }
 
     /* Selection frame */
     .sel-frame {
@@ -339,14 +337,14 @@
       display: none; width: 100%;
       margin-top: 28px;
       border-radius: 24px;
-      border: 1px solid rgba(245,200,66,0.35);
+      border: 1px solid rgba(245,200,66,0.25);
       background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,200,66,0.14), transparent 55%),
-        rgba(255,255,255,0.04);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,200,66,0.08), transparent 55%),
+        rgba(0,0,0,0.2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: clamp(24px,4vw,40px);
-      box-shadow: 0 0 60px rgba(245,200,66,0.15), 0 30px 70px rgba(0,0,0,0.4);
+      box-shadow: 0 0 40px rgba(245,200,66,0.08), 0 20px 50px rgba(0,0,0,0.3);
       text-align: center;
     }
     .result.show {
@@ -403,39 +401,6 @@
       color: var(--gold); font-size: .88rem; font-weight: 700; letter-spacing: .08em;
     }
 
-    /* ── Music toggle ── */
-    .music-btn {
-      position: fixed; bottom: 24px; right: 24px; z-index: 900;
-      width: 52px; height: 52px;
-      border: 1px solid rgba(245,200,66,0.4);
-      border-radius: 50%;
-      background: rgba(7,9,26,0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      color: var(--gold);
-      font-size: 1.4rem;
-      cursor: pointer;
-      display: grid; place-items: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(245,200,66,0.12);
-      transition: transform .15s, box-shadow .15s, border-color .15s;
-    }
-    .music-btn:hover { transform: scale(1.08); box-shadow: 0 6px 30px rgba(0,0,0,0.5), 0 0 28px rgba(245,200,66,0.2); }
-    .music-btn.muted { color: var(--muted); border-color: var(--border); }
-    .music-btn .icon-on, .music-btn .icon-off { position: absolute; transition: opacity .2s; }
-    .music-btn .icon-off { opacity: 0; }
-    .music-btn.muted .icon-on { opacity: 0; }
-    .music-btn.muted .icon-off { opacity: 1; }
-
-    /* Spinning disc animation for playing state */
-    .music-btn::after {
-      content: ""; position: absolute; inset: -3px;
-      border-radius: 50%;
-      border: 2px dashed rgba(245,200,66,0.35);
-      animation: discSpin 6s linear infinite;
-      opacity: 0; transition: opacity .3s;
-    }
-    .music-btn.playing::after { opacity: 1; }
-    @keyframes discSpin { to { transform: rotate(360deg); } }
 
     /* ── Canvas ── */
     canvas.confetti { position:fixed; inset:0; z-index:999; pointer-events:none; }
@@ -467,17 +432,11 @@
     </div>
   </div>
 
-  <audio id="bgm" loop preload="auto">
-    <source src="https://raw.communitydragon.org/15.2/plugins/rcp-fe-lol-champ-select/global/default/sounds/music-cs-draft-pick-base-layer-01.ogg" type="audio/ogg">
-  </audio>
+  <audio id="bgm" loop preload="auto" src="bgm.ogg"></audio>
   <audio id="sfxLockin" preload="none">
-    <source src="https://raw.communitydragon.org/15.2/plugins/rcp-fe-lol-champ-select/global/default/sounds/sfx-cs-lockin-button-click.ogg" type="audio/ogg">
+    <source src="https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-champ-select/global/default/sounds/sfx-cs-lockin-button-click.ogg" type="audio/ogg">
   </audio>
 
-  <button class="music-btn muted" id="musicBtn" type="button" aria-label="切换背景音乐">
-    <span class="icon-on">♫</span>
-    <span class="icon-off">♪</span>
-  </button>
 
   <main class="page">
     <div class="tag">广州 · 周末远征 · 32条线路</div>
@@ -583,42 +542,23 @@
     const ctx        = canvas.getContext("2d");
     const bgm        = document.querySelector("#bgm");
     const sfxLockin  = document.querySelector("#sfxLockin");
-    const musicBtn   = document.querySelector("#musicBtn");
 
     let pool        = [...trails];
     let rolling     = false;
     let particles   = [];
     let raf         = null;
     let audioCtx    = null;
-    let musicOn      = true;
-    let musicStarted = false;
-    let userPaused   = false;
+    let bgmPlaying  = false;
 
     bgm.volume       = 0.35;
     sfxLockin.volume  = 0.55;
 
-    function startMusicOnce() {
-      if (musicStarted || userPaused) return;
+    function forcePlayBgm() {
+      if (bgmPlaying) return;
       bgm.play().then(() => {
-        musicStarted = true;
-        musicBtn.classList.remove("muted");
-        musicBtn.classList.add("playing");
+        bgmPlaying = true;
         unbindAutoplay();
       }).catch(() => {});
-    }
-
-    function toggleMusic() {
-      if (!musicStarted) {
-        userPaused = false;
-        startMusicOnce();
-        return;
-      }
-      musicOn = !musicOn;
-      userPaused = !musicOn;
-      musicBtn.classList.toggle("muted", !musicOn);
-      musicBtn.classList.toggle("playing", musicOn);
-      if (musicOn) { bgm.play().catch(() => {}); }
-      else { bgm.pause(); }
     }
 
     function playSfx() {
@@ -626,14 +566,20 @@
       sfxLockin.play().catch(() => {});
     }
 
-    const autoplayEvents = ["click","touchstart","mousemove","keydown","scroll","pointerdown"];
+    const autoplayEvents = ["click","touchstart","mousemove","keydown","scroll","pointerdown","touchend"];
     function unbindAutoplay() {
-      autoplayEvents.forEach(e => document.removeEventListener(e, startMusicOnce));
+      autoplayEvents.forEach(e => document.removeEventListener(e, forcePlayBgm));
     }
-    autoplayEvents.forEach(e => document.addEventListener(e, startMusicOnce, { once: true, passive: true }));
-    startMusicOnce();
+    autoplayEvents.forEach(e => document.addEventListener(e, forcePlayBgm, { once: true, passive: true }));
+    forcePlayBgm();
 
-    musicBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleMusic(); });
+    setInterval(() => {
+      if (!bgmPlaying && !bgm.paused) bgmPlaying = true;
+      if (!bgmPlaying) forcePlayBgm();
+      if (bgmPlaying && bgm.paused) {
+        bgm.play().catch(() => {});
+      }
+    }, 1000);
 
     const diffCls = d => ({ "轻松":"easy", "标准":"normal", "困难":"hard" })[d] || "normal";
 
