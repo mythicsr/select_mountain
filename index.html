@@ -679,8 +679,23 @@
       o.connect(g); g.connect(ac.destination);
       o.start(); o.stop(ac.currentTime + dur);
     }
-    const blip = () => tone(300 + Math.random() * 500, "square", 0.04, 0.04);
-    const win  = () => [440,554,659,880,1108].forEach((f,i) => setTimeout(() => tone(f,"sine",.25,.12), i*90));
+    function tick_sfx() {
+      const ac = getAudio();
+      const buf = ac.createBuffer(1, ac.sampleRate * 0.012 | 0, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) {
+        const t = i / ac.sampleRate;
+        d[i] = Math.sin(2 * Math.PI * 1800 * t) * Math.exp(-t * 600) * 0.3;
+      }
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const g = ac.createGain();
+      g.gain.value = 0.12;
+      src.connect(g); g.connect(ac.destination);
+      src.start();
+    }
+    const blip = () => tick_sfx();
+    const win  = () => [440,554,659,880,1108].forEach((f,i) => setTimeout(() => tone(f,"sine",.25,.10), i*90));
 
     /* ── Spin ── */
     function spin() {
