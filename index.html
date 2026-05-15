@@ -34,18 +34,24 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Background image ── */
-    .bg-img {
-      position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none;
-      width: 200%; height: 100%;
-      background: url('bg1.jpg') center/cover no-repeat;
-      filter: brightness(.55) saturate(1.15);
-      animation: bgPan 25s linear infinite;
+    /* ── Background slideshow ── */
+    .bg-slides {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
     }
+    .bg-slide {
+      position: absolute; top: 0; left: 0;
+      width: 180%; height: 100%;
+      background-size: cover; background-position: center;
+      filter: brightness(.55) saturate(1.15);
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      animation: bgPan 20s linear infinite;
+    }
+    .bg-slide.active { opacity: 1; }
     @keyframes bgPan {
       0%   { transform: translateX(0); }
-      50%  { transform: translateX(-35%); }
-      100% { transform: translateX(0); }
+      100% { transform: translateX(-30%); }
     }
 
     /* Color overlay — light vignette only */
@@ -445,7 +451,12 @@
   </style>
 </head>
 <body>
-  <div class="bg-img" aria-hidden="true"></div>
+  <div class="bg-slides" aria-hidden="true">
+    <div class="bg-slide active" style="background-image:url('b1.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('b2.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('b3.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('b4.jpg')"></div>
+  </div>
   <div class="bg-overlay" aria-hidden="true"></div>
 
   <!-- Entry splash -->
@@ -802,6 +813,20 @@
 
     resize();
     renderReel(0);
+
+    /* ── Background slideshow ── */
+    const slides = document.querySelectorAll(".bg-slide");
+    let curSlide = 0;
+    setInterval(() => {
+      slides[curSlide].classList.remove("active");
+      curSlide = (curSlide + 1) % slides.length;
+      slides[curSlide].classList.remove("active");
+      void slides[curSlide].offsetWidth;
+      slides[curSlide].style.animation = "none";
+      void slides[curSlide].offsetWidth;
+      slides[curSlide].style.animation = "";
+      slides[curSlide].classList.add("active");
+    }, 8000);
   </script>
 </body>
 </html>
