@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本周爬哪座山？· 广州爬山选择器</title>
+  <title>请选择你的山 · 广州登山选择器</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,7 +38,7 @@
     .bg-img {
       position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none;
       width: 200%; height: 100%;
-      background: url('bg1.png') center/cover no-repeat;
+      background: url('bg1.jpg') center/cover no-repeat;
       filter: brightness(.55) saturate(1.15);
       animation: bgPan 25s linear infinite;
     }
@@ -433,15 +433,13 @@
   </div>
 
   <audio id="bgm" loop preload="auto" src="bgm.ogg"></audio>
-  <audio id="sfxLockin" preload="none">
-    <source src="https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-champ-select/global/default/sounds/sfx-cs-lockin-button-click.ogg" type="audio/ogg">
-  </audio>
+  <audio id="sfxLockin" preload="auto" src="lockin.ogg"></audio>
 
 
   <main class="page">
     <div class="tag">广州 · 周末远征 · 32条线路</div>
 
-    <h1>本周爬哪座山？</h1>
+    <h1>请选择你的山</h1>
 
     <p class="sub">32 条广州登山线路，选择困难就交给随机。滚动 5 秒，自动锁定本周路线。</p>
 
@@ -551,7 +549,7 @@
     let bgmPlaying  = false;
 
     bgm.volume       = 0.35;
-    sfxLockin.volume  = 0.55;
+    sfxLockin.volume  = 0.8;
 
     function forcePlayBgm() {
       if (bgmPlaying) return;
