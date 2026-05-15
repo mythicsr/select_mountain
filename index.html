@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本周爬哪座山？ - ARCADE EDITION</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <title>本周爬哪座山？ - 山海副本抽取器</title>
   <style>
     :root {
       color-scheme: dark;
@@ -441,8 +440,517 @@
       pointer-events: none;
     }
     
+    /* MMORPG skin overrides */
+    :root {
+      --void: #050612;
+      --panel: rgba(9, 16, 35, 0.78);
+      --panel-strong: rgba(12, 24, 58, 0.9);
+      --rune-blue: #57e8ff;
+      --rune-violet: #9c6cff;
+      --rune-gold: #ffd166;
+      --rune-green: #56ff9d;
+      --danger: #ff4d6d;
+    }
+
+    body {
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(90, 232, 255, 0.23), transparent 28%),
+        radial-gradient(circle at 16% 22%, rgba(156, 108, 255, 0.28), transparent 26%),
+        radial-gradient(circle at 84% 10%, rgba(255, 209, 102, 0.18), transparent 24%),
+        linear-gradient(180deg, #080a1f 0%, #11183d 42%, #050612 100%);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    body::before {
+      height: 58vh;
+      background-image:
+        linear-gradient(transparent 91%, rgba(87, 232, 255, 0.55) 94%, transparent 97%),
+        linear-gradient(90deg, transparent 94%, rgba(156, 108, 255, 0.5) 96%, transparent 98%);
+      background-size: 70px 70px;
+      opacity: 0.38;
+      filter: drop-shadow(0 -30px 50px rgba(87, 232, 255, 0.18));
+    }
+
+    body::after {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: -4;
+      height: 42vh;
+      content: "";
+      background:
+        linear-gradient(142deg, transparent 0 12%, rgba(20, 78, 116, 0.72) 13% 26%, transparent 27%),
+        linear-gradient(158deg, transparent 0 33%, rgba(29, 112, 98, 0.68) 34% 50%, transparent 51%),
+        linear-gradient(132deg, transparent 0 55%, rgba(48, 58, 124, 0.72) 56% 73%, transparent 74%);
+      opacity: 0.85;
+      animation: mountainBreath 7s ease-in-out infinite alternate;
+    }
+
+    .game-bg,
+    .game-bg::before,
+    .game-bg::after {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      pointer-events: none;
+      content: "";
+    }
+
+    .game-bg {
+      background:
+        radial-gradient(circle at 50% 46%, rgba(87, 232, 255, 0.12), transparent 20%),
+        repeating-conic-gradient(from 0deg at 50% 46%, transparent 0 8deg, rgba(87, 232, 255, 0.045) 9deg 10deg);
+      animation: portalSpin 18s linear infinite;
+    }
+
+    .game-bg::before {
+      background:
+        linear-gradient(115deg, transparent 0 42%, rgba(87, 232, 255, 0.18) 43% 44%, transparent 45%),
+        linear-gradient(65deg, transparent 0 56%, rgba(255, 209, 102, 0.13) 57% 58%, transparent 59%);
+      mix-blend-mode: screen;
+      animation: energySweep 5s ease-in-out infinite;
+    }
+
+    .game-bg::after {
+      background-image:
+        radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(87, 232, 255, 0.8) 0 1px, transparent 1.5px);
+      background-size: 120px 120px, 190px 190px;
+      opacity: 0.42;
+      animation: starfall 24s linear infinite;
+    }
+
+    .scanlines {
+      opacity: 0.22;
+    }
+
+    .vignette {
+      background: radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 28px));
+      padding: 26px 0 58px;
+    }
+
+    .top-hud {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    .hud-card {
+      position: relative;
+      overflow: hidden;
+      padding: 14px 16px;
+      border: 1px solid rgba(87, 232, 255, 0.32);
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+      background: linear-gradient(135deg, rgba(87, 232, 255, 0.13), rgba(156, 108, 255, 0.09));
+      box-shadow: inset 0 0 22px rgba(87, 232, 255, 0.12), 0 0 24px rgba(87, 232, 255, 0.1);
+      text-align: left;
+    }
+
+    .hud-card::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      transform: translateX(-120%);
+      animation: cardSweep 4s ease-in-out infinite;
+    }
+
+    .hud-label {
+      display: block;
+      color: rgba(255, 255, 255, 0.58);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      display: block;
+      margin-top: 4px;
+      color: #fff;
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      font-weight: 900;
+      text-shadow: 0 0 12px var(--rune-blue);
+    }
+
+    .eyebrow {
+      border-radius: 0;
+      border-color: rgba(255, 209, 102, 0.78);
+      color: var(--rune-gold);
+      background: linear-gradient(90deg, rgba(255, 209, 102, 0.08), rgba(87, 232, 255, 0.08));
+      box-shadow: 0 0 22px rgba(255, 209, 102, 0.28), inset 0 0 18px rgba(255, 209, 102, 0.12);
+      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
+      font-weight: 900;
+    }
+
+    h1 {
+      letter-spacing: -0.04em;
+      text-shadow:
+        0 0 8px #fff,
+        0 0 24px var(--rune-blue),
+        0 0 58px var(--rune-violet),
+        0 0 96px rgba(255, 209, 102, 0.45);
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 14px auto 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .machine {
+      margin-top: 32px;
+      padding: clamp(18px, 3vw, 34px);
+      border: 1px solid rgba(87, 232, 255, 0.4);
+      border-radius: 30px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 18%),
+        linear-gradient(180deg, rgba(10, 19, 48, 0.96), rgba(3, 6, 18, 0.94));
+      box-shadow:
+        0 34px 90px rgba(0, 0, 0, 0.56),
+        0 0 38px rgba(87, 232, 255, 0.24),
+        0 0 80px rgba(156, 108, 255, 0.18),
+        inset 0 0 44px rgba(87, 232, 255, 0.1);
+    }
+
+    .machine::before {
+      position: absolute;
+      inset: -2px;
+      z-index: -1;
+      border-radius: 32px;
+      content: "";
+      background: conic-gradient(from var(--ring-angle), transparent, var(--rune-blue), var(--rune-violet), var(--rune-gold), transparent);
+      filter: blur(14px);
+      opacity: 0.55;
+      animation: ringRotate 5s linear infinite;
+    }
+
+    .mission-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 16px;
+      border: 1px solid rgba(255, 209, 102, 0.28);
+      border-radius: 20px;
+      background: rgba(255, 209, 102, 0.065);
+      text-align: left;
+    }
+
+    .mission-panel b {
+      display: block;
+      color: var(--rune-gold);
+      font-size: 0.82rem;
+      letter-spacing: 0.2em;
+    }
+
+    .mission-panel span {
+      display: block;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .power-core {
+      width: 86px;
+      height: 86px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(87, 232, 255, 0.55);
+      border-radius: 50%;
+      color: var(--rune-blue);
+      font-weight: 900;
+      background:
+        radial-gradient(circle, rgba(87, 232, 255, 0.35), transparent 38%),
+        conic-gradient(var(--rune-blue), var(--rune-violet), var(--rune-gold), var(--rune-blue));
+      box-shadow: 0 0 28px rgba(87, 232, 255, 0.38);
+      animation: corePulse 1.6s ease-in-out infinite;
+    }
+
+    .power-core span {
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #060a18;
+    }
+
+    .reel-wrap {
+      height: clamp(330px, 45vw, 470px);
+      border: 1px solid rgba(87, 232, 255, 0.45);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at center, rgba(87, 232, 255, 0.18), transparent 42%),
+        linear-gradient(180deg, rgba(3, 8, 22, 0.98), rgba(7, 19, 42, 0.92));
+      box-shadow:
+        inset 0 0 60px rgba(87, 232, 255, 0.18),
+        inset 0 0 120px rgba(156, 108, 255, 0.09),
+        0 0 34px rgba(87, 232, 255, 0.12);
+    }
+
+    .reel-wrap::before {
+      height: 35%;
+      background: linear-gradient(to bottom, #030714 0%, rgba(3, 7, 20, 0.76) 48%, transparent);
+    }
+
+    .reel-wrap::after {
+      height: 35%;
+      background: linear-gradient(to top, #030714 0%, rgba(3, 7, 20, 0.76) 48%, transparent);
+    }
+
+    .target-line {
+      left: 20px;
+      right: 20px;
+      height: 104px;
+      border-color: rgba(255, 209, 102, 0.9);
+      border-radius: 22px;
+      background: linear-gradient(90deg, transparent, rgba(255, 209, 102, 0.14), transparent);
+      box-shadow:
+        0 0 24px rgba(255, 209, 102, 0.56),
+        inset 0 0 22px rgba(255, 209, 102, 0.28);
+    }
+
+    .target-line::before,
+    .target-line::after {
+      position: absolute;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      content: "";
+      border-top: 4px solid var(--rune-gold);
+      border-right: 4px solid var(--rune-gold);
+      filter: drop-shadow(0 0 10px var(--rune-gold));
+    }
+
+    .target-line::before {
+      left: -15px;
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .target-line::after {
+      right: -15px;
+      transform: translateY(-50%) rotate(225deg);
+    }
+
+    .reel-item {
+      min-height: 82px;
+      margin: 0 18px;
+      padding: 16px 22px;
+      border: 1px solid rgba(87, 232, 255, 0.34);
+      border-radius: 18px;
+      background:
+        linear-gradient(90deg, rgba(87, 232, 255, 0.12), rgba(156, 108, 255, 0.1)),
+        rgba(255, 255, 255, 0.045);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 0 18px rgba(87, 232, 255, 0.08);
+      backdrop-filter: blur(8px);
+    }
+
+    .reel-item strong {
+      color: #fff;
+      font-size: clamp(1.2rem, 3.2vw, 2.25rem);
+      text-shadow: 0 0 10px var(--rune-blue), 0 0 28px rgba(156, 108, 255, 0.55);
+    }
+
+    .reel-item span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 1rem;
+    }
+
+    .rolling .reel-item {
+      filter: blur(2.6px) saturate(1.6);
+      box-shadow: 0 0 30px rgba(87, 232, 255, 0.22);
+    }
+
+    .countdown {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      z-index: 4;
+      min-width: 86px;
+      padding: 10px 12px;
+      border: 1px solid rgba(87, 232, 255, 0.42);
+      border-radius: 16px;
+      color: var(--rune-blue);
+      background: rgba(2, 7, 18, 0.76);
+      box-shadow: 0 0 18px rgba(87, 232, 255, 0.22);
+      font-size: 1.8rem;
+      font-weight: 900;
+      text-shadow: 0 0 12px var(--rune-blue);
+    }
+
+    .status {
+      color: var(--rune-gold);
+      font-size: clamp(1.1rem, 3vw, 1.8rem);
+      text-shadow: 0 0 14px rgba(255, 209, 102, 0.74);
+      animation: statusPulse 1.2s ease-in-out infinite;
+    }
+
+    .controls {
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 28px;
+    }
+
+    .arcade-btn {
+      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      border-radius: 0;
+      background: linear-gradient(180deg, #ff5277, #bb1744);
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.32),
+        0 10px 0 #6b0d28,
+        0 18px 34px rgba(0,0,0,0.52),
+        0 0 26px rgba(255, 77, 109, 0.58);
+      letter-spacing: 0.08em;
+    }
+
+    .arcade-btn.cyan {
+      background: linear-gradient(180deg, #57e8ff, #167db8);
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.32),
+        0 10px 0 #0a3d62,
+        0 18px 34px rgba(0,0,0,0.52),
+        0 0 26px rgba(87, 232, 255, 0.58);
+    }
+
+    .result {
+      position: relative;
+      overflow: hidden;
+      border-color: rgba(255, 209, 102, 0.76);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 209, 102, 0.26), transparent 42%),
+        linear-gradient(135deg, rgba(87, 232, 255, 0.12), rgba(156, 108, 255, 0.16)),
+        rgba(5, 8, 22, 0.92);
+      box-shadow:
+        0 0 34px rgba(255, 209, 102, 0.42),
+        0 0 92px rgba(156, 108, 255, 0.24),
+        inset 0 0 34px rgba(255, 209, 102, 0.12);
+    }
+
+    .result::before {
+      position: absolute;
+      inset: -40%;
+      content: "";
+      background: conic-gradient(transparent, rgba(255, 209, 102, 0.22), transparent, rgba(87, 232, 255, 0.16), transparent);
+      animation: ringRotate 8s linear infinite;
+    }
+
+    .result > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-kicker {
+      color: var(--rune-gold);
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 0.24em;
+      text-shadow: 0 0 14px var(--rune-gold);
+    }
+
+    .result h2 {
+      color: #fff;
+      font-size: clamp(2rem, 6vw, 4.6rem);
+      text-shadow:
+        0 0 10px #fff,
+        0 0 28px var(--rune-gold),
+        0 0 68px rgba(255, 209, 102, 0.48);
+    }
+
+    .meta {
+      min-width: 150px;
+      border-color: rgba(87, 232, 255, 0.36);
+      background: rgba(87, 232, 255, 0.08);
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+    }
+
+    .meta b {
+      color: #fff;
+      text-shadow: 0 0 12px var(--rune-blue);
+    }
+
+    .loot-ribbon {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 18px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255, 209, 102, 0.42);
+      border-radius: 999px;
+      color: var(--rune-gold);
+      background: rgba(255, 209, 102, 0.1);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+
+    @property --ring-angle {
+      syntax: "<angle>";
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    @keyframes ringRotate {
+      to { --ring-angle: 360deg; transform: rotate(360deg); }
+    }
+
+    @keyframes mountainBreath {
+      to { transform: translateY(16px) scaleX(1.04); }
+    }
+
+    @keyframes portalSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes energySweep {
+      0%, 100% { opacity: 0.25; transform: translateX(-4%); }
+      50% { opacity: 0.8; transform: translateX(4%); }
+    }
+
+    @keyframes starfall {
+      to { background-position: 220px 520px, -160px 360px; }
+    }
+
+    @keyframes cardSweep {
+      45%, 100% { transform: translateX(130%); }
+    }
+
+    @keyframes corePulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.08); filter: brightness(1.45); }
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; transform: translateY(0); }
+      50% { opacity: 0.72; transform: translateY(-2px); }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
+      .top-hud {
+        grid-template-columns: 1fr;
+      }
+
+      .mission-panel {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .power-core {
+        margin: 0 auto;
+      }
+
       .reel-item {
         flex-direction: column;
         text-align: center;
@@ -465,31 +973,57 @@
   </style>
 </head>
 <body>
+  <div class="game-bg" aria-hidden="true"></div>
   <div class="scanlines"></div>
   <div class="vignette"></div>
   <canvas class="confetti" id="confetti"></canvas>
 
   <main class="shell">
-    <div class="eyebrow">INSERT COIN TO PLAY</div>
-    <h1 class="glitch" data-text="本周爬哪座山？" id="title">本周爬哪座山？</h1>
+    <div class="top-hud" aria-label="副本状态">
+      <div class="hud-card">
+        <span class="hud-label">Server</span>
+        <span class="hud-value">广州山野一区</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Event</span>
+        <span class="hud-value">周末远征匹配</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Pool</span>
+        <span class="hud-value">32 条可爬线路</span>
+      </div>
+    </div>
+
+    <div class="eyebrow">RAID MATCHMAKING ONLINE</div>
+    <h1 class="glitch" data-text="山海副本抽取器" id="title">山海副本抽取器</h1>
+    <p class="subtitle">开启周末远征匹配，山名滚轮将在 5 秒内完成能量充能，最终掉落本周 Boss 路线。</p>
 
     <section class="machine" id="machine">
+      <div class="mission-panel">
+        <div>
+          <b>MISSION BRIEFING</b>
+          <span>队伍目标：抽取一条广州爬山线路，周末按命运出发。</span>
+        </div>
+        <div class="power-core" aria-hidden="true"><span>READY</span></div>
+      </div>
       <div class="reel-wrap" id="reelWrap">
+        <div class="countdown" id="countdown">5.0</div>
         <div class="target-line"></div>
         <div class="reel" id="reel"></div>
       </div>
 
-      <div class="status" id="status">PRESS START</div>
+      <div class="status" id="status">等待队长按下 START</div>
 
       <div class="controls">
-        <button class="arcade-btn" id="drawBtn" type="button">开始抽山 (START)</button>
-        <button class="arcade-btn cyan" id="shuffleBtn" type="button">洗牌 (SHUFFLE)</button>
+        <button class="arcade-btn" id="drawBtn" type="button">开启匹配 START</button>
+        <button class="arcade-btn cyan" id="shuffleBtn" type="button">重洗卡池 SHUFFLE</button>
       </div>
 
       <article class="result" id="result">
-        <div class="result-kicker">>>> WINNER <<<</div>
+        <div class="result-kicker">LEGENDARY ROUTE DROP</div>
         <h2 id="resultName"></h2>
         <span class="badge" id="resultDifficulty"></span>
+        <div class="loot-ribbon">副本门票已掉落 · 本周必须出发</div>
         <div class="meta-grid">
           <div class="meta">
             <b id="resultDistance"></b>
@@ -554,6 +1088,7 @@
     const drawBtn = document.querySelector("#drawBtn");
     const shuffleBtn = document.querySelector("#shuffleBtn");
     const statusText = document.querySelector("#status");
+    const countdown = document.querySelector("#countdown");
     const result = document.querySelector("#result");
     const resultName = document.querySelector("#resultName");
     const resultDifficulty = document.querySelector("#resultDifficulty");
@@ -671,11 +1206,11 @@
       result.classList.remove("show");
       reelWrap.classList.add("rolling");
       machine.classList.add("shake");
-      statusText.textContent = "ROLLING...";
+      statusText.textContent = "能量充能中：正在匹配周末副本...";
 
       const targetIndex = Math.floor(Math.random() * currentTrails.length);
       const start = performance.now();
-      const duration = 4000;
+      const duration = 5000;
       const startIndex = Math.floor(Math.random() * currentTrails.length);
       const fullRounds = 8;
       const totalSteps = fullRounds * currentTrails.length + ((targetIndex - startIndex + currentTrails.length) % currentTrails.length);
@@ -688,6 +1223,7 @@
         const eased = 1 - Math.pow(1 - progress, 4);
         const step = Math.floor(eased * totalSteps);
         const index = (startIndex + step) % currentTrails.length;
+        countdown.textContent = `${Math.max(0, (duration - (now - start)) / 1000).toFixed(1)}`;
 
         if (index !== lastIndex) {
           playBlip();
@@ -705,10 +1241,11 @@
         isRolling = false;
         drawBtn.disabled = false;
         shuffleBtn.disabled = false;
-        drawBtn.textContent = "再抽一次 (RETRY)";
+        drawBtn.textContent = "再开一局 RETRY";
         reelWrap.classList.remove("rolling");
         machine.classList.remove("shake");
-        statusText.textContent = ">>> JACKPOT <<<";
+        countdown.textContent = "0.0";
+        statusText.textContent = "传送门已锁定：本周路线掉落！";
         
         playWin();
         showResult(winner);
@@ -782,7 +1319,8 @@
       playTone(300, 'sawtooth', 0.1, 0.1);
       currentTrails = shuffle(currentTrails);
       renderReel(0);
-      statusText.textContent = "SHUFFLED!";
+      countdown.textContent = "5.0";
+      statusText.textContent = "卡池已重洗，等待队长开局";
     });
 
     window.addEventListener("resize", resizeCanvas);
