@@ -402,6 +402,34 @@
     }
 
 
+    /* ── Entry splash ── */
+    .splash {
+      position: fixed; inset: 0; z-index: 2000;
+      display: grid; place-items: center;
+      background: rgba(7,9,26,0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+      transition: opacity .6s ease;
+    }
+    .splash.gone { opacity: 0; pointer-events: none; }
+    .splash-inner { text-align: center; animation: revealZoom .6s cubic-bezier(.17,.89,.32,1.2) both; }
+    .splash-title {
+      font-size: clamp(2.2rem,6vw,4.5rem);
+      font-weight: 900;
+      letter-spacing: -.03em;
+      background: linear-gradient(135deg, #fff 20%, var(--gold) 55%, var(--gold2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 24px rgba(245,200,66,0.4));
+      margin-bottom: 24px;
+    }
+    .splash-hint {
+      color: var(--gold); opacity: .7;
+      font-size: clamp(.85rem,2vw,1.1rem);
+      letter-spacing: .15em;
+      animation: fadePulse 2s ease-in-out infinite;
+    }
+
     /* ── Canvas ── */
     canvas.confetti { position:fixed; inset:0; z-index:999; pointer-events:none; }
 
@@ -419,6 +447,14 @@
 <body>
   <div class="bg-img" aria-hidden="true"></div>
   <div class="bg-overlay" aria-hidden="true"></div>
+
+  <!-- Entry splash -->
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-title">请选择你的山</div>
+      <div class="splash-hint">点击任意位置开始</div>
+    </div>
+  </div>
 
   <canvas class="confetti" id="confetti"></canvas>
 
@@ -546,11 +582,11 @@
     let particles   = [];
     let raf         = null;
     let audioCtx    = null;
-    let bgmPlaying  = false;
-
-    const BGM_VOL = 0.35;
+    const BGM_VOL    = 0.35;
     bgm.volume       = 0;
     sfxLockin.volume  = 0.8;
+
+    const splash = document.querySelector("#splash");
 
     function fadeInBgm() {
       let v = 0;
@@ -562,14 +598,9 @@
       }, 50);
     }
 
-    function forcePlayBgm() {
-      if (bgmPlaying) return;
+    function startBgm() {
       bgm.currentTime = 5;
-      bgm.play().then(() => {
-        bgmPlaying = true;
-        fadeInBgm();
-        unbindAutoplay();
-      }).catch(() => {});
+      bgm.play().then(() => fadeInBgm()).catch(() => {});
     }
 
     function playSfx() {
@@ -577,20 +608,17 @@
       sfxLockin.play().catch(() => {});
     }
 
-    const autoplayEvents = ["click","touchstart","mousemove","keydown","scroll","pointerdown","touchend"];
-    function unbindAutoplay() {
-      autoplayEvents.forEach(e => document.removeEventListener(e, forcePlayBgm));
-    }
-    autoplayEvents.forEach(e => document.addEventListener(e, forcePlayBgm, { once: true, passive: true }));
-    forcePlayBgm();
+    splash.addEventListener("click", () => {
+      startBgm();
+      splash.classList.add("gone");
+      setTimeout(() => splash.remove(), 700);
+    }, { once: true });
 
     setInterval(() => {
-      if (!bgmPlaying && !bgm.paused) bgmPlaying = true;
-      if (!bgmPlaying) forcePlayBgm();
-      if (bgmPlaying && bgm.paused) {
+      if (bgm.paused && !splash.parentNode) {
         bgm.play().catch(() => {});
       }
-    }, 1000);
+    }, 2000);
 
     const diffCls = d => ({ "轻松":"easy", "标准":"normal", "困难":"hard" })[d] || "normal";
 
