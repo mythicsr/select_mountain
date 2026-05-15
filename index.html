@@ -3,1330 +3,639 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本周爬哪座山？ - 山海副本抽取器</title>
+  <title>天命抽签 · 广州爬山选择器</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      color-scheme: dark;
-      --neon-green: #39ff14;
-      --neon-cyan: #0ff;
-      --neon-pink: #ff00ff;
-      --neon-yellow: #ffea00;
-      --neon-red: #ff073a;
-      --bg-color: #050510;
-      --grid-color: rgba(0, 255, 255, 0.2);
+      --bg:      #07091a;
+      --surface: rgba(255,255,255,0.04);
+      --border:  rgba(255,255,255,0.10);
+      --gold:    #f5c842;
+      --gold2:   #e8973a;
+      --amber:   rgba(245,200,66,0.18);
+      --teal:    #4ee8c8;
+      --violet:  #9d7dff;
+      --text:    #f0ece0;
+      --muted:   rgba(240,236,224,0.55);
+      --easy:    #4ee8a8;
+      --normal:  #f5c842;
+      --hard:    #ff6b6b;
     }
 
-    * {
-      box-sizing: border-box;
-      user-select: none;
-    }
+    html { color-scheme: dark; }
 
     body {
       min-height: 100vh;
-      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
       overflow-x: hidden;
-      background-color: var(--bg-color);
-      color: #fff;
-      font-family: 'ZCOOL KuaiLe', cursive, system-ui, sans-serif;
-      /* Outrun retro grid background */
-      background-image: 
-        linear-gradient(transparent 95%, var(--grid-color) 95%),
-        linear-gradient(90deg, transparent 95%, var(--grid-color) 95%);
-      background-size: 40px 40px;
-      background-position: center bottom;
-      perspective: 1000px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Moving ground grid effect */
-    body::before {
-      content: "";
-      position: fixed;
-      bottom: 0;
-      left: -50%;
-      width: 200%;
-      height: 40vh;
-      background-image: 
-        linear-gradient(transparent 90%, var(--neon-pink) 95%),
-        linear-gradient(90deg, transparent 95%, var(--neon-pink) 95%);
-      background-size: 50px 50px;
-      transform: rotateX(75deg);
-      transform-origin: center bottom;
-      z-index: -2;
-      animation: gridMove 2s linear infinite;
-      opacity: 0.6;
+    /* ── Aurora background ── */
+    .aurora {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 55% at 20% -10%, rgba(78,232,200,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 5%,  rgba(157,125,255,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 60% at 50% 110%, rgba(245,200,66,0.12) 0%, transparent 55%),
+        linear-gradient(180deg, #0c1030 0%, #07091a 50%, #0a0c1e 100%);
     }
 
-    @keyframes gridMove {
-      from { transform: rotateX(75deg) translateY(0); }
-      to { transform: rotateX(75deg) translateY(50px); }
+    /* Stars */
+    .stars {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.9) 0 1px, transparent 1.2px),
+        radial-gradient(circle, rgba(200,220,255,0.6) 0 1px, transparent 1.2px);
+      background-size: 180px 180px, 130px 130px;
+      background-position: 0 0, 65px 90px;
+      opacity: 0.35;
+      animation: starDrift 40s linear infinite;
     }
+    @keyframes starDrift { to { background-position: 360px 360px, 425px 450px; } }
 
-    /* CRT Scanlines */
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0),
-        rgba(255, 255, 255, 0) 50%,
-        rgba(0, 0, 0, 0.2) 50%,
-        rgba(0, 0, 0, 0.2)
-      );
-      background-size: 100% 4px;
-      z-index: 999;
-      pointer-events: none;
+    /* Mountain silhouette SVG */
+    .mountains {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 0;
+      pointer-events: none; overflow: hidden; height: 38vh;
     }
+    .mountains svg { width: 100%; height: 100%; }
 
-    /* CRT Vignette */
-    .vignette {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.8) 100%);
-      z-index: 998;
-      pointer-events: none;
-    }
-
-    .shell {
-      position: relative;
-      width: min(900px, calc(100% - 32px));
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 1;
+      width: min(1000px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 40px 0 60px;
-      z-index: 10;
+      padding: 48px 0 80px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
       text-align: center;
     }
 
-    .eyebrow {
-      display: inline-block;
-      margin-bottom: 10px;
-      padding: 5px 15px;
-      color: var(--neon-cyan);
-      font-size: 1.2rem;
-      letter-spacing: 4px;
+    /* ── Header ── */
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 18px;
+      border: 1px solid rgba(245,200,66,0.5);
+      border-radius: 999px;
+      color: var(--gold);
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .22em;
       text-transform: uppercase;
-      border: 2px solid var(--neon-cyan);
-      border-radius: 4px;
-      box-shadow: 0 0 10px var(--neon-cyan), inset 0 0 10px var(--neon-cyan);
-      background: rgba(0, 255, 255, 0.1);
-      animation: blink 2s infinite;
+      background: rgba(245,200,66,0.08);
+      backdrop-filter: blur(8px);
+      margin-bottom: 22px;
     }
+    .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); animation: dot-blink 1.8s ease-in-out infinite; }
+    @keyframes dot-blink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 
     h1 {
-      margin: 0;
-      font-size: clamp(3rem, 8vw, 6rem);
-      line-height: 1.1;
-      color: #fff;
-      text-shadow: 
-        0 0 5px #fff,
-        0 0 10px #fff,
-        0 0 20px var(--neon-pink),
-        0 0 40px var(--neon-pink),
-        0 0 80px var(--neon-pink);
-      position: relative;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900;
+      letter-spacing: -.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 20%, var(--gold) 55%, var(--gold2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 32px rgba(245,200,66,0.4));
+      margin-bottom: 16px;
     }
 
-    /* Glitch effect for title */
-    .glitch {
-      position: relative;
+    .sub {
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.75;
+      margin-bottom: 44px;
     }
-    .glitch::before, .glitch::after {
-      content: attr(data-text);
-      position: absolute;
-      top: 0;
-      left: 0;
+
+    /* ── Machine card ── */
+    .card {
       width: 100%;
-      height: 100%;
-      background: var(--bg-color);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: clamp(20px,4vw,36px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06) inset,
+        0 40px 80px rgba(0,0,0,0.5),
+        0 0 60px rgba(157,125,255,0.08);
+      position: relative; overflow: hidden;
     }
-    .glitch::before {
-      left: 2px;
-      text-shadow: -2px 0 var(--neon-cyan);
-      clip: rect(44px, 450px, 56px, 0);
-      animation: glitch-anim 5s infinite linear alternate-reverse;
-    }
-    .glitch::after {
-      left: -2px;
-      text-shadow: -2px 0 var(--neon-red);
-      clip: rect(44px, 450px, 56px, 0);
-      animation: glitch-anim2 5s infinite linear alternate-reverse;
-    }
-
-    @keyframes glitch-anim {
-      0% { clip: rect(10px, 9999px, 80px, 0); }
-      5% { clip: rect(32px, 9999px, 12px, 0); }
-      10% { clip: rect(89px, 9999px, 54px, 0); }
-      15% { clip: rect(12px, 9999px, 90px, 0); }
-      20% { clip: rect(54px, 9999px, 23px, 0); }
-      25% { clip: rect(1px, 9999px, 40px, 0); }
-      30% { clip: rect(0, 0, 0, 0); }
-      100% { clip: rect(0, 0, 0, 0); }
-    }
-    @keyframes glitch-anim2 {
-      0% { clip: rect(65px, 9999px, 100px, 0); }
-      5% { clip: rect(12px, 9999px, 50px, 0); }
-      10% { clip: rect(40px, 9999px, 12px, 0); }
-      15% { clip: rect(80px, 9999px, 34px, 0); }
-      20% { clip: rect(23px, 9999px, 98px, 0); }
-      25% { clip: rect(60px, 9999px, 12px, 0); }
-      30% { clip: rect(0, 0, 0, 0); }
-      100% { clip: rect(0, 0, 0, 0); }
+    /* Top shimmer stripe */
+    .card::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     }
 
-    .machine {
+    /* ── Reel window ── */
+    .reel-win {
       position: relative;
-      margin-top: 40px;
-      padding: 30px;
-      background: #111;
-      border: 4px solid #333;
+      height: clamp(300px,40vw,440px);
       border-radius: 20px;
-      box-shadow: 
-        0 20px 50px rgba(0,0,0,0.8),
-        inset 0 0 20px rgba(0,0,0,1),
-        0 0 15px var(--neon-cyan),
-        0 0 30px var(--neon-pink);
-    }
-
-    /* Screen shake animation class */
-    .shake {
-      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both infinite;
-    }
-
-    @keyframes shake {
-      10%, 90% { transform: translate3d(-1px, 0, 0); }
-      20%, 80% { transform: translate3d(2px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-      40%, 60% { transform: translate3d(4px, 0, 0); }
-    }
-
-    .reel-wrap {
-      position: relative;
-      height: 300px;
-      background: #000;
-      border: 6px solid #222;
-      border-radius: 10px;
+      border: 1px solid rgba(245,200,66,0.25);
+      background:
+        radial-gradient(ellipse at center, rgba(245,200,66,0.06) 0%, transparent 65%),
+        rgba(0,0,0,0.45);
       overflow: hidden;
-      box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.2);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 0 30px rgba(245,200,66,0.06);
     }
 
-    .reel-wrap::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 30%;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-      z-index: 2;
+    /* Fade masks */
+    .reel-win::before, .reel-win::after {
+      content: ""; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none;
     }
-    .reel-wrap::after {
-      content: "";
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 30%;
-      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-      z-index: 2;
-    }
+    .reel-win::before { top: 0; height: 36%; background: linear-gradient(to bottom, rgba(7,9,26,1), rgba(7,9,26,0)); }
+    .reel-win::after  { bottom: 0; height: 36%; background: linear-gradient(to top,   rgba(7,9,26,1), rgba(7,9,26,0)); }
 
-    /* The target sight */
-    .target-line {
-      position: absolute;
-      top: 50%;
-      left: 10px;
-      right: 10px;
-      height: 80px;
+    /* Selection frame */
+    .sel-frame {
+      position: absolute; top: 50%; left: 16px; right: 16px;
+      height: clamp(76px,11vw,100px);
       transform: translateY(-50%);
-      border: 2px solid var(--neon-yellow);
-      border-radius: 8px;
-      background: rgba(255, 234, 0, 0.1);
-      box-shadow: 0 0 15px var(--neon-yellow), inset 0 0 15px var(--neon-yellow);
-      z-index: 1;
-      pointer-events: none;
+      border-radius: 14px;
+      border: 1.5px solid rgba(245,200,66,0.7);
+      background: linear-gradient(90deg, rgba(245,200,66,0.06), rgba(245,200,66,0.12), rgba(245,200,66,0.06));
+      box-shadow: 0 0 20px rgba(245,200,66,0.22), inset 0 0 16px rgba(245,200,66,0.08);
+      z-index: 2; pointer-events: none;
+    }
+    /* Corner marks */
+    .sel-frame::before, .sel-frame::after {
+      content: "";
+      position: absolute; top: 50%; width: 20px; height: 20px;
+      border-top: 2.5px solid var(--gold); border-right: 2.5px solid var(--gold);
+      filter: drop-shadow(0 0 6px var(--gold));
+    }
+    .sel-frame::before { left: -11px; transform: translateY(-50%) rotate(225deg); }
+    .sel-frame::after  { right: -11px; transform: translateY(-50%) rotate(45deg); }
+
+    /* Countdown badge */
+    .cdown {
+      position: absolute; top: 14px; right: 14px; z-index: 5;
+      min-width: 72px; padding: 8px 12px;
+      border: 1px solid rgba(78,232,200,0.35);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      color: var(--teal);
+      font-size: 1.6rem; font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 12px var(--teal);
     }
 
+    /* ── Reel items ── */
     .reel {
-      width: 100%;
-      transform-style: preserve-3d;
-      perspective: 800px;
+      position: relative; width: 100%;
+      transform-style: preserve-3d; perspective: 700px;
     }
-
-    .reel-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      margin: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      transition: all 0.1s;
+    .ri {
+      position: absolute; width: calc(100% - 32px);
+      left: 16px; top: calc(50% - 38px);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      transition: filter .12s;
     }
-
-    .rolling .reel-item {
-      filter: blur(2px);
-      transform: scaleY(1.2);
-    }
-
-    .reel-item strong {
-      font-size: 1.8rem;
+    .ri-name {
+      font-size: clamp(1.1rem,3vw,1.9rem);
+      font-weight: 800;
       color: #fff;
-      text-shadow: 0 0 5px var(--neon-cyan);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .ri-meta { font-size: .88rem; color: var(--muted); margin-top: 3px; }
+    .rolling .ri { filter: blur(2px) brightness(1.1); }
 
-    .reel-item span {
-      font-size: 1.2rem;
-      color: #aaa;
-    }
-
+    /* Difficulty badge */
     .badge {
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      flex-shrink: 0;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: .82rem; font-weight: 800;
+      letter-spacing: .06em;
     }
+    .easy   { background: rgba(78,232,168,0.18); color: var(--easy);   border: 1px solid rgba(78,232,168,0.4); }
+    .normal { background: rgba(245,200,66,0.15); color: var(--normal); border: 1px solid rgba(245,200,66,0.4); }
+    .hard   { background: rgba(255,107,107,0.15); color: var(--hard);  border: 1px solid rgba(255,107,107,0.4); }
 
-    .easy { color: #000; background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
-    .normal { color: #000; background: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); }
-    .hard { color: #000; background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-top: 40px;
-    }
-
-    /* Arcade 3D Button */
-    .arcade-btn {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-      outline: none;
-      border: 0;
-      vertical-align: middle;
-      text-decoration: none;
-      font-family: 'ZCOOL KuaiLe', cursive;
-      font-size: 2rem;
-      color: #fff;
-      text-transform: uppercase;
-      padding: 1.25em 2em;
-      background: #e74c3c;
-      border: 2px solid #c0392b;
-      border-radius: 15px;
-      transform-style: preserve-3d;
-      transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), background 150ms cubic-bezier(0, 0, 0.58, 1);
-      box-shadow: 
-        inset 0 2px 0 rgba(255,255,255,0.3),
-        0 10px 0 #c0392b,
-        0 10px 20px rgba(0,0,0,0.5),
-        0 0 20px var(--neon-red);
-      text-shadow: 0 2px 2px rgba(0,0,0,0.3);
-    }
-    
-    .arcade-btn.cyan {
-      background: #00d2d3;
-      border-color: #01a3a4;
-      box-shadow: 
-        inset 0 2px 0 rgba(255,255,255,0.3),
-        0 10px 0 #01a3a4,
-        0 10px 20px rgba(0,0,0,0.5),
-        0 0 20px var(--neon-cyan);
-    }
-
-    .arcade-btn:active, .arcade-btn.pressed {
-      transform: translateY(10px);
-      box-shadow: 
-        inset 0 2px 0 rgba(255,255,255,0.3),
-        0 0 0 #c0392b,
-        0 0 10px rgba(0,0,0,0.5),
-        0 0 20px var(--neon-red);
-    }
-
-    .arcade-btn.cyan:active, .arcade-btn.cyan.pressed {
-      box-shadow: 
-        inset 0 2px 0 rgba(255,255,255,0.3),
-        0 0 0 #01a3a4,
-        0 0 10px rgba(0,0,0,0.5),
-        0 0 20px var(--neon-cyan);
-    }
-
-    .arcade-btn:disabled {
-      filter: grayscale(1);
-      cursor: not-allowed;
-      transform: translateY(10px);
-      box-shadow: 0 0 0 #555;
-    }
-
+    /* ── Status ── */
     .status {
-      margin-top: 30px;
-      font-size: 1.8rem;
-      color: var(--neon-yellow);
-      text-shadow: 0 0 10px var(--neon-yellow);
-      min-height: 40px;
-      animation: blink 1s infinite;
+      margin-top: 20px; min-height: 32px;
+      font-size: clamp(.95rem,2.5vw,1.2rem);
+      color: var(--gold); letter-spacing: .06em;
+      text-shadow: 0 0 16px rgba(245,200,66,0.5);
+      animation: fadePulse 2s ease-in-out infinite;
+    }
+    @keyframes fadePulse { 0%,100% { opacity:1; } 50% { opacity:.65; } }
+
+    /* ── Buttons ── */
+    .btns {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 14px; margin-top: 24px;
     }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    .btn {
+      cursor: pointer; border: 0; outline: none;
+      font: 800 1.05rem/1 inherit;
+      letter-spacing: .06em;
+      padding: 16px 36px;
+      border-radius: 14px;
+      transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+    }
+    .btn:active { transform: scale(.96); }
+    .btn:disabled { filter: saturate(0) brightness(.55); cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f5c842 0%, #e8973a 100%);
+      color: #1a0f00;
+      box-shadow: 0 6px 32px rgba(245,200,66,0.4), 0 2px 0 rgba(0,0,0,0.3) inset;
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(245,200,66,0.55), 0 2px 0 rgba(0,0,0,0.3) inset;
     }
 
+    .btn-ghost {
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+    }
+
+    /* ── Result card ── */
     .result {
-      display: none;
-      margin-top: 40px;
-      padding: 30px;
-      border: 4px solid var(--neon-pink);
-      border-radius: 15px;
-      background: rgba(0, 0, 0, 0.8);
-      box-shadow: 0 0 30px var(--neon-pink), inset 0 0 20px var(--neon-pink);
-      transform: scale(0.8);
-      opacity: 0;
+      display: none; width: 100%;
+      margin-top: 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(245,200,66,0.35);
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,200,66,0.14), transparent 55%),
+        rgba(255,255,255,0.04);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: clamp(24px,4vw,40px);
+      box-shadow: 0 0 60px rgba(245,200,66,0.15), 0 30px 70px rgba(0,0,0,0.4);
+      text-align: center;
     }
-
     .result.show {
       display: block;
-      animation: popIn 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+      animation: revealCard .7s cubic-bezier(.22,.9,.36,1.1) both;
+    }
+    @keyframes revealCard {
+      from { opacity:0; transform: translateY(20px) scale(.96); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
     }
 
-    @keyframes popIn {
-      to { transform: scale(1); opacity: 1; }
+    .result-eyebrow {
+      font-size: .78rem; font-weight: 700; letter-spacing: .28em;
+      text-transform: uppercase; color: var(--gold);
+      opacity: .85; margin-bottom: 12px;
     }
 
-    .result-kicker {
-      font-size: 1.5rem;
-      color: var(--neon-cyan);
-      margin-bottom: 15px;
+    .result-name {
+      font-size: clamp(1.9rem,5vw,3.8rem);
+      font-weight: 900; letter-spacing: -.03em; line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--gold) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 24px rgba(245,200,66,0.35));
+      margin-bottom: 14px;
     }
 
-    .result h2 {
-      font-size: 3.5rem;
-      margin: 10px 0 20px;
-      color: var(--neon-green);
-      text-shadow: 0 0 15px var(--neon-green);
-    }
+    .result-badge { margin-bottom: 24px; }
 
-    .meta-grid {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin-top: 30px;
-    }
-
-    .meta {
-      padding: 15px 25px;
-      border: 2px solid var(--neon-cyan);
-      border-radius: 10px;
-      background: rgba(0, 255, 255, 0.1);
-      box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.2);
-    }
-
-    .meta b {
-      display: block;
-      font-size: 2rem;
-      color: #fff;
-    }
-
-    .meta span {
-      font-size: 1.2rem;
-      color: var(--neon-cyan);
-    }
-
-    canvas.confetti {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      pointer-events: none;
-    }
-    
-    /* MMORPG skin overrides */
-    :root {
-      --void: #050612;
-      --panel: rgba(9, 16, 35, 0.78);
-      --panel-strong: rgba(12, 24, 58, 0.9);
-      --rune-blue: #57e8ff;
-      --rune-violet: #9c6cff;
-      --rune-gold: #ffd166;
-      --rune-green: #56ff9d;
-      --danger: #ff4d6d;
-    }
-
-    body {
-      overflow-x: hidden;
-      background:
-        radial-gradient(circle at 50% 18%, rgba(90, 232, 255, 0.23), transparent 28%),
-        radial-gradient(circle at 16% 22%, rgba(156, 108, 255, 0.28), transparent 26%),
-        radial-gradient(circle at 84% 10%, rgba(255, 209, 102, 0.18), transparent 24%),
-        linear-gradient(180deg, #080a1f 0%, #11183d 42%, #050612 100%);
-      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-    }
-
-    body::before {
-      height: 58vh;
-      background-image:
-        linear-gradient(transparent 91%, rgba(87, 232, 255, 0.55) 94%, transparent 97%),
-        linear-gradient(90deg, transparent 94%, rgba(156, 108, 255, 0.5) 96%, transparent 98%);
-      background-size: 70px 70px;
-      opacity: 0.38;
-      filter: drop-shadow(0 -30px 50px rgba(87, 232, 255, 0.18));
-    }
-
-    body::after {
-      position: fixed;
-      inset: auto 0 0;
-      z-index: -4;
-      height: 42vh;
-      content: "";
-      background:
-        linear-gradient(142deg, transparent 0 12%, rgba(20, 78, 116, 0.72) 13% 26%, transparent 27%),
-        linear-gradient(158deg, transparent 0 33%, rgba(29, 112, 98, 0.68) 34% 50%, transparent 51%),
-        linear-gradient(132deg, transparent 0 55%, rgba(48, 58, 124, 0.72) 56% 73%, transparent 74%);
-      opacity: 0.85;
-      animation: mountainBreath 7s ease-in-out infinite alternate;
-    }
-
-    .game-bg,
-    .game-bg::before,
-    .game-bg::after {
-      position: fixed;
-      inset: 0;
-      z-index: -3;
-      pointer-events: none;
-      content: "";
-    }
-
-    .game-bg {
-      background:
-        radial-gradient(circle at 50% 46%, rgba(87, 232, 255, 0.12), transparent 20%),
-        repeating-conic-gradient(from 0deg at 50% 46%, transparent 0 8deg, rgba(87, 232, 255, 0.045) 9deg 10deg);
-      animation: portalSpin 18s linear infinite;
-    }
-
-    .game-bg::before {
-      background:
-        linear-gradient(115deg, transparent 0 42%, rgba(87, 232, 255, 0.18) 43% 44%, transparent 45%),
-        linear-gradient(65deg, transparent 0 56%, rgba(255, 209, 102, 0.13) 57% 58%, transparent 59%);
-      mix-blend-mode: screen;
-      animation: energySweep 5s ease-in-out infinite;
-    }
-
-    .game-bg::after {
-      background-image:
-        radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
-        radial-gradient(circle, rgba(87, 232, 255, 0.8) 0 1px, transparent 1.5px);
-      background-size: 120px 120px, 190px 190px;
-      opacity: 0.42;
-      animation: starfall 24s linear infinite;
-    }
-
-    .scanlines {
-      opacity: 0.22;
-    }
-
-    .vignette {
-      background: radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
-    }
-
-    .shell {
-      width: min(1120px, calc(100% - 28px));
-      padding: 26px 0 58px;
-    }
-
-    .top-hud {
+    .meta-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0,1fr));
       gap: 12px;
-      margin-bottom: 26px;
     }
 
-    .hud-card {
-      position: relative;
-      overflow: hidden;
-      padding: 14px 16px;
-      border: 1px solid rgba(87, 232, 255, 0.32);
-      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
-      background: linear-gradient(135deg, rgba(87, 232, 255, 0.13), rgba(156, 108, 255, 0.09));
-      box-shadow: inset 0 0 22px rgba(87, 232, 255, 0.12), 0 0 24px rgba(87, 232, 255, 0.1);
-      text-align: left;
+    .meta-cell {
+      padding: 16px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
     }
-
-    .hud-card::after {
-      position: absolute;
-      inset: 0;
-      content: "";
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-      transform: translateX(-120%);
-      animation: cardSweep 4s ease-in-out infinite;
+    .meta-val {
+      display: block; font-size: 1.4rem; font-weight: 900;
+      color: #fff; margin-bottom: 4px;
     }
+    .meta-lbl { font-size: .78rem; color: var(--muted); letter-spacing: .08em; }
 
-    .hud-label {
-      display: block;
-      color: rgba(255, 255, 255, 0.58);
-      font-size: 0.72rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    .hud-value {
-      display: block;
-      margin-top: 4px;
-      color: #fff;
-      font-size: clamp(1rem, 2vw, 1.35rem);
-      font-weight: 900;
-      text-shadow: 0 0 12px var(--rune-blue);
-    }
-
-    .eyebrow {
-      border-radius: 0;
-      border-color: rgba(255, 209, 102, 0.78);
-      color: var(--rune-gold);
-      background: linear-gradient(90deg, rgba(255, 209, 102, 0.08), rgba(87, 232, 255, 0.08));
-      box-shadow: 0 0 22px rgba(255, 209, 102, 0.28), inset 0 0 18px rgba(255, 209, 102, 0.12);
-      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
-      font-weight: 900;
-    }
-
-    h1 {
-      letter-spacing: -0.04em;
-      text-shadow:
-        0 0 8px #fff,
-        0 0 24px var(--rune-blue),
-        0 0 58px var(--rune-violet),
-        0 0 96px rgba(255, 209, 102, 0.45);
-    }
-
-    .subtitle {
-      max-width: 760px;
-      margin: 14px auto 0;
-      color: rgba(255, 255, 255, 0.72);
-      font-size: 1.05rem;
-      line-height: 1.8;
-    }
-
-    .machine {
-      margin-top: 32px;
-      padding: clamp(18px, 3vw, 34px);
-      border: 1px solid rgba(87, 232, 255, 0.4);
-      border-radius: 30px;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 18%),
-        linear-gradient(180deg, rgba(10, 19, 48, 0.96), rgba(3, 6, 18, 0.94));
-      box-shadow:
-        0 34px 90px rgba(0, 0, 0, 0.56),
-        0 0 38px rgba(87, 232, 255, 0.24),
-        0 0 80px rgba(156, 108, 255, 0.18),
-        inset 0 0 44px rgba(87, 232, 255, 0.1);
-    }
-
-    .machine::before {
-      position: absolute;
-      inset: -2px;
-      z-index: -1;
-      border-radius: 32px;
-      content: "";
-      background: conic-gradient(from var(--ring-angle), transparent, var(--rune-blue), var(--rune-violet), var(--rune-gold), transparent);
-      filter: blur(14px);
-      opacity: 0.55;
-      animation: ringRotate 5s linear infinite;
-    }
-
-    .mission-panel {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 18px;
-      align-items: center;
-      margin-bottom: 20px;
-      padding: 16px;
-      border: 1px solid rgba(255, 209, 102, 0.28);
-      border-radius: 20px;
-      background: rgba(255, 209, 102, 0.065);
-      text-align: left;
-    }
-
-    .mission-panel b {
-      display: block;
-      color: var(--rune-gold);
-      font-size: 0.82rem;
-      letter-spacing: 0.2em;
-    }
-
-    .mission-panel span {
-      display: block;
-      margin-top: 6px;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 1.08rem;
-      font-weight: 800;
-    }
-
-    .power-core {
-      width: 86px;
-      height: 86px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(87, 232, 255, 0.55);
-      border-radius: 50%;
-      color: var(--rune-blue);
-      font-weight: 900;
-      background:
-        radial-gradient(circle, rgba(87, 232, 255, 0.35), transparent 38%),
-        conic-gradient(var(--rune-blue), var(--rune-violet), var(--rune-gold), var(--rune-blue));
-      box-shadow: 0 0 28px rgba(87, 232, 255, 0.38);
-      animation: corePulse 1.6s ease-in-out infinite;
-    }
-
-    .power-core span {
-      width: 64px;
-      height: 64px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: #060a18;
-    }
-
-    .reel-wrap {
-      height: clamp(330px, 45vw, 470px);
-      border: 1px solid rgba(87, 232, 255, 0.45);
-      border-radius: 26px;
-      background:
-        radial-gradient(circle at center, rgba(87, 232, 255, 0.18), transparent 42%),
-        linear-gradient(180deg, rgba(3, 8, 22, 0.98), rgba(7, 19, 42, 0.92));
-      box-shadow:
-        inset 0 0 60px rgba(87, 232, 255, 0.18),
-        inset 0 0 120px rgba(156, 108, 255, 0.09),
-        0 0 34px rgba(87, 232, 255, 0.12);
-    }
-
-    .reel-wrap::before {
-      height: 35%;
-      background: linear-gradient(to bottom, #030714 0%, rgba(3, 7, 20, 0.76) 48%, transparent);
-    }
-
-    .reel-wrap::after {
-      height: 35%;
-      background: linear-gradient(to top, #030714 0%, rgba(3, 7, 20, 0.76) 48%, transparent);
-    }
-
-    .target-line {
-      left: 20px;
-      right: 20px;
-      height: 104px;
-      border-color: rgba(255, 209, 102, 0.9);
-      border-radius: 22px;
-      background: linear-gradient(90deg, transparent, rgba(255, 209, 102, 0.14), transparent);
-      box-shadow:
-        0 0 24px rgba(255, 209, 102, 0.56),
-        inset 0 0 22px rgba(255, 209, 102, 0.28);
-    }
-
-    .target-line::before,
-    .target-line::after {
-      position: absolute;
-      top: 50%;
-      width: 28px;
-      height: 28px;
-      content: "";
-      border-top: 4px solid var(--rune-gold);
-      border-right: 4px solid var(--rune-gold);
-      filter: drop-shadow(0 0 10px var(--rune-gold));
-    }
-
-    .target-line::before {
-      left: -15px;
-      transform: translateY(-50%) rotate(45deg);
-    }
-
-    .target-line::after {
-      right: -15px;
-      transform: translateY(-50%) rotate(225deg);
-    }
-
-    .reel-item {
-      min-height: 82px;
-      margin: 0 18px;
-      padding: 16px 22px;
-      border: 1px solid rgba(87, 232, 255, 0.34);
-      border-radius: 18px;
-      background:
-        linear-gradient(90deg, rgba(87, 232, 255, 0.12), rgba(156, 108, 255, 0.1)),
-        rgba(255, 255, 255, 0.045);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 18px rgba(87, 232, 255, 0.08);
-      backdrop-filter: blur(8px);
-    }
-
-    .reel-item strong {
-      color: #fff;
-      font-size: clamp(1.2rem, 3.2vw, 2.25rem);
-      text-shadow: 0 0 10px var(--rune-blue), 0 0 28px rgba(156, 108, 255, 0.55);
-    }
-
-    .reel-item span {
-      color: rgba(255, 255, 255, 0.72);
-      font-size: 1rem;
-    }
-
-    .rolling .reel-item {
-      filter: blur(2.6px) saturate(1.6);
-      box-shadow: 0 0 30px rgba(87, 232, 255, 0.22);
-    }
-
-    .countdown {
-      position: absolute;
-      top: 18px;
-      right: 20px;
-      z-index: 4;
-      min-width: 86px;
-      padding: 10px 12px;
-      border: 1px solid rgba(87, 232, 255, 0.42);
-      border-radius: 16px;
-      color: var(--rune-blue);
-      background: rgba(2, 7, 18, 0.76);
-      box-shadow: 0 0 18px rgba(87, 232, 255, 0.22);
-      font-size: 1.8rem;
-      font-weight: 900;
-      text-shadow: 0 0 12px var(--rune-blue);
-    }
-
-    .status {
-      color: var(--rune-gold);
-      font-size: clamp(1.1rem, 3vw, 1.8rem);
-      text-shadow: 0 0 14px rgba(255, 209, 102, 0.74);
-      animation: statusPulse 1.2s ease-in-out infinite;
-    }
-
-    .controls {
-      flex-wrap: wrap;
-      gap: 18px;
-      margin-top: 28px;
-    }
-
-    .arcade-btn {
-      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
-      border: 1px solid rgba(255, 255, 255, 0.36);
-      border-radius: 0;
-      background: linear-gradient(180deg, #ff5277, #bb1744);
-      box-shadow:
-        inset 0 2px 0 rgba(255,255,255,0.32),
-        0 10px 0 #6b0d28,
-        0 18px 34px rgba(0,0,0,0.52),
-        0 0 26px rgba(255, 77, 109, 0.58);
-      letter-spacing: 0.08em;
-    }
-
-    .arcade-btn.cyan {
-      background: linear-gradient(180deg, #57e8ff, #167db8);
-      box-shadow:
-        inset 0 2px 0 rgba(255,255,255,0.32),
-        0 10px 0 #0a3d62,
-        0 18px 34px rgba(0,0,0,0.52),
-        0 0 26px rgba(87, 232, 255, 0.58);
-    }
-
-    .result {
-      position: relative;
-      overflow: hidden;
-      border-color: rgba(255, 209, 102, 0.76);
-      border-radius: 26px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 209, 102, 0.26), transparent 42%),
-        linear-gradient(135deg, rgba(87, 232, 255, 0.12), rgba(156, 108, 255, 0.16)),
-        rgba(5, 8, 22, 0.92);
-      box-shadow:
-        0 0 34px rgba(255, 209, 102, 0.42),
-        0 0 92px rgba(156, 108, 255, 0.24),
-        inset 0 0 34px rgba(255, 209, 102, 0.12);
-    }
-
-    .result::before {
-      position: absolute;
-      inset: -40%;
-      content: "";
-      background: conic-gradient(transparent, rgba(255, 209, 102, 0.22), transparent, rgba(87, 232, 255, 0.16), transparent);
-      animation: ringRotate 8s linear infinite;
-    }
-
-    .result > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .result-kicker {
-      color: var(--rune-gold);
-      font-size: 1.15rem;
-      font-weight: 900;
-      letter-spacing: 0.24em;
-      text-shadow: 0 0 14px var(--rune-gold);
-    }
-
-    .result h2 {
-      color: #fff;
-      font-size: clamp(2rem, 6vw, 4.6rem);
-      text-shadow:
-        0 0 10px #fff,
-        0 0 28px var(--rune-gold),
-        0 0 68px rgba(255, 209, 102, 0.48);
-    }
-
-    .meta {
-      min-width: 150px;
-      border-color: rgba(87, 232, 255, 0.36);
-      background: rgba(87, 232, 255, 0.08);
-      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-    }
-
-    .meta b {
-      color: #fff;
-      text-shadow: 0 0 12px var(--rune-blue);
-    }
-
-    .loot-ribbon {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 18px;
-      padding: 10px 16px;
-      border: 1px solid rgba(255, 209, 102, 0.42);
+    .ticket {
+      display: inline-block;
+      margin-top: 22px;
+      padding: 9px 22px;
       border-radius: 999px;
-      color: var(--rune-gold);
-      background: rgba(255, 209, 102, 0.1);
-      font-weight: 900;
-      letter-spacing: 0.1em;
+      border: 1px dashed rgba(245,200,66,0.5);
+      background: rgba(245,200,66,0.07);
+      color: var(--gold); font-size: .88rem; font-weight: 700; letter-spacing: .08em;
     }
 
-    @property --ring-angle {
-      syntax: "<angle>";
-      inherits: false;
-      initial-value: 0deg;
-    }
+    /* ── Canvas ── */
+    canvas.confetti { position:fixed; inset:0; z-index:999; pointer-events:none; }
 
-    @keyframes ringRotate {
-      to { --ring-angle: 360deg; transform: rotate(360deg); }
-    }
-
-    @keyframes mountainBreath {
-      to { transform: translateY(16px) scaleX(1.04); }
-    }
-
-    @keyframes portalSpin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes energySweep {
-      0%, 100% { opacity: 0.25; transform: translateX(-4%); }
-      50% { opacity: 0.8; transform: translateX(4%); }
-    }
-
-    @keyframes starfall {
-      to { background-position: 220px 520px, -160px 360px; }
-    }
-
-    @keyframes cardSweep {
-      45%, 100% { transform: translateX(130%); }
-    }
-
-    @keyframes corePulse {
-      0%, 100% { transform: scale(1); filter: brightness(1); }
-      50% { transform: scale(1.08); filter: brightness(1.45); }
-    }
-
-    @keyframes statusPulse {
-      0%, 100% { opacity: 1; transform: translateY(0); }
-      50% { opacity: 0.72; transform: translateY(-2px); }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .top-hud {
-        grid-template-columns: 1fr;
-      }
-
-      .mission-panel {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .power-core {
-        margin: 0 auto;
-      }
-
-      .reel-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-      }
-      .controls {
-        flex-direction: column;
-      }
-      .arcade-btn {
-        width: 100%;
-        font-size: 1.5rem;
-      }
-      .meta-grid {
-        flex-direction: column;
-      }
-      h1 {
-        font-size: 2.5rem;
-      }
+    /* ── Responsive ── */
+    @media (max-width:640px) {
+      h1 { letter-spacing: -.02em; }
+      .ri { flex-direction: column; align-items: flex-start; }
+      .ri-name { font-size: 1.15rem; }
+      .meta-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .btns { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <div class="game-bg" aria-hidden="true"></div>
-  <div class="scanlines"></div>
-  <div class="vignette"></div>
+  <div class="aurora" aria-hidden="true"></div>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="mountains" aria-hidden="true">
+    <svg viewBox="0 0 1440 220" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 220 L180 80 L340 160 L500 30 L680 140 L860 60 L1020 150 L1200 40 L1440 120 L1440 220 Z" fill="rgba(78,232,200,0.055)"/>
+      <path d="M0 220 L220 120 L400 190 L580 70 L760 170 L940 90 L1100 175 L1300 80 L1440 150 L1440 220 Z" fill="rgba(157,125,255,0.07)"/>
+      <path d="M0 220 L120 160 L300 200 L500 100 L700 190 L900 120 L1100 200 L1300 130 L1440 180 L1440 220 Z" fill="rgba(245,200,66,0.055)"/>
+    </svg>
+  </div>
+
   <canvas class="confetti" id="confetti"></canvas>
 
-  <main class="shell">
-    <div class="top-hud" aria-label="副本状态">
-      <div class="hud-card">
-        <span class="hud-label">Server</span>
-        <span class="hud-value">广州山野一区</span>
-      </div>
-      <div class="hud-card">
-        <span class="hud-label">Event</span>
-        <span class="hud-value">周末远征匹配</span>
-      </div>
-      <div class="hud-card">
-        <span class="hud-label">Pool</span>
-        <span class="hud-value">32 条可爬线路</span>
-      </div>
-    </div>
+  <main class="page">
+    <div class="tag">广州 · 周末远征 · 32条线路</div>
 
-    <div class="eyebrow">RAID MATCHMAKING ONLINE</div>
-    <h1 class="glitch" data-text="山海副本抽取器" id="title">山海副本抽取器</h1>
-    <p class="subtitle">开启周末远征匹配，山名滚轮将在 5 秒内完成能量充能，最终掉落本周 Boss 路线。</p>
+    <h1>本周爬哪座山？</h1>
 
-    <section class="machine" id="machine">
-      <div class="mission-panel">
-        <div>
-          <b>MISSION BRIEFING</b>
-          <span>队伍目标：抽取一条广州爬山线路，周末按命运出发。</span>
-        </div>
-        <div class="power-core" aria-hidden="true"><span>READY</span></div>
-      </div>
-      <div class="reel-wrap" id="reelWrap">
-        <div class="countdown" id="countdown">5.0</div>
-        <div class="target-line"></div>
+    <p class="sub">把 32 条广州登山线路丢进天命滚轮，滚动 5 秒，山神亲自为你锁定本周路线。</p>
+
+    <div class="card" id="machine">
+      <div class="reel-win" id="reelWrap">
+        <div class="sel-frame" aria-hidden="true"></div>
+        <div class="cdown" id="cdown">5.0</div>
         <div class="reel" id="reel"></div>
       </div>
 
-      <div class="status" id="status">等待队长按下 START</div>
+      <p class="status" id="status">点击"开始抽签"，交给天命决定</p>
 
-      <div class="controls">
-        <button class="arcade-btn" id="drawBtn" type="button">开启匹配 START</button>
-        <button class="arcade-btn cyan" id="shuffleBtn" type="button">重洗卡池 SHUFFLE</button>
+      <div class="btns">
+        <button class="btn btn-primary" id="drawBtn" type="button">开始抽签</button>
+        <button class="btn btn-ghost" id="shuffleBtn" type="button">重新洗牌</button>
       </div>
 
       <article class="result" id="result">
-        <div class="result-kicker">LEGENDARY ROUTE DROP</div>
-        <h2 id="resultName"></h2>
-        <span class="badge" id="resultDifficulty"></span>
-        <div class="loot-ribbon">副本门票已掉落 · 本周必须出发</div>
-        <div class="meta-grid">
-          <div class="meta">
-            <b id="resultDistance"></b>
-            <span>距离</span>
+        <div class="result-eyebrow">本周命定路线</div>
+        <div class="result-name" id="resultName"></div>
+        <div class="result-badge">
+          <span class="badge" id="resultDifficulty"></span>
+        </div>
+        <div class="meta-row">
+          <div class="meta-cell">
+            <span class="meta-val" id="resultDistance"></span>
+            <span class="meta-lbl">线路距离</span>
           </div>
-          <div class="meta">
-            <b id="resultClimb"></b>
-            <span>爬升</span>
+          <div class="meta-cell">
+            <span class="meta-val" id="resultClimb"></span>
+            <span class="meta-lbl">累计爬升</span>
           </div>
-          <div class="meta">
-            <b id="resultTime"></b>
-            <span>耗时</span>
+          <div class="meta-cell">
+            <span class="meta-val" id="resultTime"></span>
+            <span class="meta-lbl">参考耗时</span>
           </div>
-          <div class="meta">
-            <b id="resultSeason"></b>
-            <span>季节</span>
+          <div class="meta-cell">
+            <span class="meta-val" id="resultSeason"></span>
+            <span class="meta-lbl">适合月份</span>
           </div>
         </div>
+        <div class="ticket">天命已定 · 本周出发不能反悔</div>
       </article>
-    </section>
+    </div>
   </main>
 
   <script>
     const trails = [
-      { name: "暹岗大山-黄陂徒步线", distance: "10.28km", climb: "619m", time: "03:57", season: "1-12月", difficulty: "标准" },
-      { name: "大夫山往返线（北门）", distance: "3.75km", climb: "234m", time: "01:30", season: "1-12月", difficulty: "轻松" },
-      { name: "油麻山（金坑-华峰）", distance: "8.27km", climb: "628m", time: "02:37", season: "1-12月", difficulty: "标准" },
-      { name: "帽峰山-甜橙农庄环线", distance: "5.36km", climb: "344m", time: "01:24", season: "3-7月", difficulty: "轻松" },
-      { name: "番禺滴水岩森林公园亲子线", distance: "6.50km", climb: "366m", time: "02:58", season: "1-12月", difficulty: "标准" },
-      { name: "火炉山皮卡丘-天鹿湖画心", distance: "25.52km", climb: "1464m", time: "06:11", season: "1-12月", difficulty: "困难" },
-      { name: "白云山-六片山徒步线", distance: "11.05km", climb: "378m", time: "02:30", season: "7-12月", difficulty: "轻松" },
-      { name: "东平六片山徒步线", distance: "6.53km", climb: "290m", time: "01:47", season: "1-12月", difficulty: "标准" },
-      { name: "金麦线（金坑-麦村）", distance: "11.35km", climb: "765m", time: "02:29", season: "5月", difficulty: "标准" },
-      { name: "白云山徒步线(水流东-六片山)", distance: "9.54km", climb: "473m", time: "02:35", season: "1-12月", difficulty: "标准" },
-      { name: "六片山登山线", distance: "9.76km", climb: "462m", time: "03:14", season: "4月", difficulty: "标准" },
-      { name: "黄麻线(长岭登山健身步道)", distance: "10.77km", climb: "689m", time: "01:58", season: "1-12月", difficulty: "轻松" },
-      { name: "牛牯嶂徒步线(大水管-牛牯嶂)", distance: "11.45km", climb: "1065m", time: "03:42", season: "1-3,7-12月", difficulty: "困难" },
-      { name: "黄埔牛木外线(黄陂-木强水库)", distance: "18.94km", climb: "1054m", time: "06:01", season: "1-12月", difficulty: "困难" },
-      { name: "长岭线(长平-永顺大道)", distance: "12.05km", climb: "525m", time: "03:11", season: "1-12月", difficulty: "轻松" },
-      { name: "火炉山小环线（凤凰台）", distance: "7.36km", climb: "413m", time: "02:34", season: "1-5,10-12月", difficulty: "轻松" },
-      { name: "火龙渔亲子线", distance: "14.12km", climb: "771m", time: "04:49", season: "1-12月", difficulty: "标准" },
-      { name: "鸡啼山环线", distance: "10.53km", climb: "486m", time: "01:56", season: "2-4月", difficulty: "标准" },
-      { name: "火炉山-凤凰山徒步线", distance: "10.93km", climb: "633m", time: "03:46", season: "1-12月", difficulty: "标准" },
-      { name: "黄麻村湖溪小环线", distance: "3.62km", climb: "111m", time: "01:27", season: "1-12月", difficulty: "轻松" },
-      { name: "白云山亲子线（永泰-西门）", distance: "7.82km", climb: "301m", time: "01:26", season: "1-12月", difficulty: "轻松" },
-      { name: "龙渔线（龙眼洞-龙洞水库）", distance: "13.51km", climb: "719m", time: "06:03", season: "1-12月", difficulty: "标准" },
-      { name: "云道（中山纪念堂-云台花园）", distance: "9.05km", climb: "219m", time: "02:07", season: "1-12月", difficulty: "轻松" },
-      { name: "龙渔线-简易版", distance: "8.88km", climb: "383m", time: "02:25", season: "1-12月", difficulty: "轻松" },
-      { name: "油麻山环线（石牙顶天坑）", distance: "18.66km", climb: "1028m", time: "05:27", season: "3-5,10-11月", difficulty: "困难" },
-      { name: "天堂顶（大坪-影古驿站）", distance: "16.30km", climb: "1129m", time: "04:32", season: "9-10月", difficulty: "困难" },
-      { name: "牛牯嶂小环线（大猪兜水库）", distance: "6.14km", climb: "540m", time: "02:00", season: "1-12月", difficulty: "标准" },
-      { name: "黄麻线短线", distance: "6.17km", climb: "287m", time: "02:10", season: "1-12月", difficulty: "轻松" },
-      { name: "牛木线穿黄麻山", distance: "10.26km", climb: "537m", time: "02:49", season: "1-12月", difficulty: "标准" },
-      { name: "六片山徒步永泰环线", distance: "16.82km", climb: "830m", time: "04:05", season: "1-4月", difficulty: "困难" },
-      { name: "六片山环线", distance: "5.01km", climb: "237m", time: "02:16", season: "1-12月", difficulty: "轻松" },
-      { name: "牛木线（牛头山-木强水库）", distance: "16.12km", climb: "844m", time: "05:20", season: "1-12月", difficulty: "困难" }
+      { name: "暹岗大山-黄陂徒步线",      distance: "10.28km", climb: "619m",  time: "03:57", season: "全年",       difficulty: "标准" },
+      { name: "大夫山往返线（北门）",       distance: "3.75km",  climb: "234m",  time: "01:30", season: "全年",       difficulty: "轻松" },
+      { name: "油麻山（金坑-华峰）",        distance: "8.27km",  climb: "628m",  time: "02:37", season: "全年",       difficulty: "标准" },
+      { name: "帽峰山-甜橙农庄环线",        distance: "5.36km",  climb: "344m",  time: "01:24", season: "3-7月",      difficulty: "轻松" },
+      { name: "番禺滴水岩森林公园亲子线",   distance: "6.50km",  climb: "366m",  time: "02:58", season: "全年",       difficulty: "标准" },
+      { name: "火炉山皮卡丘-天鹿湖画心",   distance: "25.52km", climb: "1464m", time: "06:11", season: "全年",       difficulty: "困难" },
+      { name: "白云山-六片山徒步线",        distance: "11.05km", climb: "378m",  time: "02:30", season: "7-12月",     difficulty: "轻松" },
+      { name: "东平六片山徒步线",           distance: "6.53km",  climb: "290m",  time: "01:47", season: "全年",       difficulty: "标准" },
+      { name: "金麦线（金坑-麦村）",        distance: "11.35km", climb: "765m",  time: "02:29", season: "5月",        difficulty: "标准" },
+      { name: "白云山徒步线(水流东-六片山)", distance: "9.54km", climb: "473m",  time: "02:35", season: "全年",       difficulty: "标准" },
+      { name: "六片山登山线",               distance: "9.76km",  climb: "462m",  time: "03:14", season: "4月",        difficulty: "标准" },
+      { name: "黄麻线(长岭登山健身步道)",   distance: "10.77km", climb: "689m",  time: "01:58", season: "全年",       difficulty: "轻松" },
+      { name: "牛牯嶂徒步线(大水管-牛牯嶂)", distance:"11.45km", climb: "1065m", time: "03:42", season: "1-3,7-12月", difficulty: "困难" },
+      { name: "黄埔牛木外线(黄陂-木强水库)", distance:"18.94km", climb: "1054m", time: "06:01", season: "全年",       difficulty: "困难" },
+      { name: "长岭线(长平-永顺大道)",      distance: "12.05km", climb: "525m",  time: "03:11", season: "全年",       difficulty: "轻松" },
+      { name: "火炉山小环线（凤凰台）",     distance: "7.36km",  climb: "413m",  time: "02:34", season: "1-5,10-12月", difficulty: "轻松" },
+      { name: "火龙渔亲子线",               distance: "14.12km", climb: "771m",  time: "04:49", season: "全年",       difficulty: "标准" },
+      { name: "鸡啼山环线",                 distance: "10.53km", climb: "486m",  time: "01:56", season: "2-4月",      difficulty: "标准" },
+      { name: "火炉山-凤凰山徒步线",        distance: "10.93km", climb: "633m",  time: "03:46", season: "全年",       difficulty: "轻松" },
+      { name: "黄麻村湖溪小环线",           distance: "3.62km",  climb: "111m",  time: "01:27", season: "全年",       difficulty: "轻松" },
+      { name: "白云山亲子线（永泰-西门）",  distance: "7.82km",  climb: "301m",  time: "01:26", season: "全年",       difficulty: "轻松" },
+      { name: "龙渔线（龙眼洞-龙洞水库）",  distance: "13.51km", climb: "719m",  time: "06:03", season: "全年",       difficulty: "标准" },
+      { name: "云道（中山纪念堂-云台花园）", distance: "9.05km", climb: "219m",  time: "02:07", season: "全年",       difficulty: "轻松" },
+      { name: "龙渔线-简易版",              distance: "8.88km",  climb: "383m",  time: "02:25", season: "全年",       difficulty: "轻松" },
+      { name: "油麻山环线（石牙顶天坑）",   distance: "18.66km", climb: "1028m", time: "05:27", season: "3-5,10-11月", difficulty: "困难" },
+      { name: "天堂顶（大坪-影古驿站）",    distance: "16.30km", climb: "1129m", time: "04:32", season: "9-10月",     difficulty: "困难" },
+      { name: "牛牯嶂小环线（大猪兜水库）", distance: "6.14km",  climb: "540m",  time: "02:00", season: "全年",       difficulty: "标准" },
+      { name: "黄麻线短线",                 distance: "6.17km",  climb: "287m",  time: "02:10", season: "全年",       difficulty: "轻松" },
+      { name: "牛木线穿黄麻山",             distance: "10.26km", climb: "537m",  time: "02:49", season: "全年",       difficulty: "标准" },
+      { name: "六片山徒步永泰环线",         distance: "16.82km", climb: "830m",  time: "04:05", season: "1-4月",      difficulty: "困难" },
+      { name: "六片山环线",                 distance: "5.01km",  climb: "237m",  time: "02:16", season: "全年",       difficulty: "轻松" },
+      { name: "牛木线（牛头山-木强水库）",  distance: "16.12km", climb: "844m",  time: "05:20", season: "全年",       difficulty: "困难" }
     ];
 
-    const reel = document.querySelector("#reel");
-    const reelWrap = document.querySelector("#reelWrap");
-    const machine = document.querySelector("#machine");
-    const drawBtn = document.querySelector("#drawBtn");
+    const reel       = document.querySelector("#reel");
+    const reelWrap   = document.querySelector("#reelWrap");
+    const machine    = document.querySelector("#machine");
+    const drawBtn    = document.querySelector("#drawBtn");
     const shuffleBtn = document.querySelector("#shuffleBtn");
-    const statusText = document.querySelector("#status");
-    const countdown = document.querySelector("#countdown");
-    const result = document.querySelector("#result");
-    const resultName = document.querySelector("#resultName");
-    const resultDifficulty = document.querySelector("#resultDifficulty");
-    const resultDistance = document.querySelector("#resultDistance");
-    const resultClimb = document.querySelector("#resultClimb");
-    const resultTime = document.querySelector("#resultTime");
-    const resultSeason = document.querySelector("#resultSeason");
-    const canvas = document.querySelector("#confetti");
-    const ctx = canvas.getContext("2d");
+    const statusEl   = document.querySelector("#status");
+    const cdownEl    = document.querySelector("#cdown");
+    const result     = document.querySelector("#result");
+    const resName    = document.querySelector("#resultName");
+    const resDiff    = document.querySelector("#resultDifficulty");
+    const resDist    = document.querySelector("#resultDistance");
+    const resClimb   = document.querySelector("#resultClimb");
+    const resTime    = document.querySelector("#resultTime");
+    const resSeason  = document.querySelector("#resultSeason");
+    const canvas     = document.querySelector("#confetti");
+    const ctx        = canvas.getContext("2d");
 
-    let currentTrails = [...trails];
-    let isRolling = false;
-    let particles = [];
-    let animationFrame = null;
-    let audioCtx = null;
+    let pool        = [...trails];
+    let rolling     = false;
+    let particles   = [];
+    let raf         = null;
+    let audioCtx    = null;
 
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const diffCls = d => ({ "轻松":"easy", "标准":"normal", "困难":"hard" })[d] || "normal";
+
+    function shuffleArr(a) {
+      return a.map(x => ({ x, r: Math.random() })).sort((a,b) => a.r - b.r).map(({x}) => x);
+    }
+
+    function renderReel(center = 0) {
+      const items = [];
+      for (let off = -3; off <= 3; off++) {
+        const i = (center + off + pool.length) % pool.length;
+        items.push({ t: pool[i], off });
       }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
-
-    function playTone(freq, type, duration, vol = 0.1) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      
-      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-      
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function playBlip() {
-      playTone(400 + Math.random() * 400, 'square', 0.05, 0.05);
-    }
-
-    function playWin() {
-      const notes = [440, 554, 659, 880, 1108]; // A major arpeggio
-      notes.forEach((freq, i) => {
-        setTimeout(() => {
-          playTone(freq, 'square', 0.2, 0.1);
-        }, i * 100);
-      });
-    }
-
-    function difficultyClass(difficulty) {
-      return { "轻松": "easy", "标准": "normal", "困难": "hard" }[difficulty] || "normal";
-    }
-
-    function shuffle(list) {
-      return list
-        .map((item) => ({ item, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ item }) => item);
-    }
-
-    function renderReel(centerIndex = 0) {
-      const visible = [];
-      for (let offset = -3; offset <= 3; offset++) {
-        const index = (centerIndex + offset + currentTrails.length) % currentTrails.length;
-        visible.push({ trail: currentTrails[index], offset });
-      }
-
-      reel.innerHTML = visible.map(({ trail, offset }) => {
-        const depth = Math.abs(offset);
-        const scale = 1 - depth * 0.15;
-        const opacity = 1 - depth * 0.3;
-        const translateY = offset * 85;
+      const SLOT_H = 88; // px per slot
+      reel.innerHTML = items.map(({ t, off }) => {
+        const depth   = Math.abs(off);
+        const scale   = 1 - depth * 0.13;
+        const opacity = 1 - depth * 0.28;
+        const ty      = off * SLOT_H;
         return `
-          <div class="reel-item" style="transform: translateY(${translateY}px) scale(${scale}); opacity: ${opacity}; position: absolute; width: 100%; top: calc(50% - 35px);">
-            <div>
-              <strong>${trail.name}</strong>
-              <br>
-              <span>${trail.distance} | 爬升 ${trail.climb}</span>
+          <div class="ri" style="transform:translateY(${ty}px) scale(${scale});opacity:${opacity};">
+            <div style="min-width:0;">
+              <div class="ri-name">${t.name}</div>
+              <div class="ri-meta">${t.distance} · 爬升 ${t.climb} · ${t.time}</div>
             </div>
-            <span class="badge ${difficultyClass(trail.difficulty)}">${trail.difficulty}</span>
-          </div>
-        `;
+            <span class="badge ${diffCls(t.difficulty)}">${t.difficulty}</span>
+          </div>`;
       }).join("");
     }
 
-    function showResult(trail) {
-      resultName.textContent = trail.name;
-      resultDifficulty.textContent = trail.difficulty;
-      resultDifficulty.className = `badge ${difficultyClass(trail.difficulty)}`;
-      resultDistance.textContent = trail.distance;
-      resultClimb.textContent = trail.climb;
-      resultTime.textContent = trail.time;
-      resultSeason.textContent = trail.season;
+    function showResult(t) {
+      resName.textContent   = t.name;
+      resDiff.textContent   = t.difficulty;
+      resDiff.className     = `badge ${diffCls(t.difficulty)}`;
+      resDist.textContent   = t.distance;
+      resClimb.textContent  = t.climb;
+      resTime.textContent   = t.time;
+      resSeason.textContent = t.season;
       result.classList.remove("show");
-      void result.offsetWidth; // trigger reflow
+      void result.offsetWidth;
       result.classList.add("show");
     }
 
-    function roll() {
-      initAudio();
-      if (isRolling) return;
+    /* ── Audio ── */
+    function getAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+    function tone(freq, type, dur, vol = 0.08) {
+      const ac = getAudio();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + dur);
+    }
+    const blip = () => tone(300 + Math.random() * 500, "square", 0.04, 0.04);
+    const win  = () => [440,554,659,880,1108].forEach((f,i) => setTimeout(() => tone(f,"sine",.25,.12), i*90));
 
-      isRolling = true;
-      drawBtn.disabled = true;
-      shuffleBtn.disabled = true;
-      drawBtn.classList.add("pressed");
-      setTimeout(() => drawBtn.classList.remove("pressed"), 200);
-
+    /* ── Spin ── */
+    function spin() {
+      if (rolling) return;
+      rolling = true;
+      drawBtn.disabled = shuffleBtn.disabled = true;
       result.classList.remove("show");
       reelWrap.classList.add("rolling");
-      machine.classList.add("shake");
-      statusText.textContent = "能量充能中：正在匹配周末副本...";
+      statusEl.textContent = "天命滚轮旋转中…";
 
-      const targetIndex = Math.floor(Math.random() * currentTrails.length);
-      const start = performance.now();
-      const duration = 5000;
-      const startIndex = Math.floor(Math.random() * currentTrails.length);
-      const fullRounds = 8;
-      const totalSteps = fullRounds * currentTrails.length + ((targetIndex - startIndex + currentTrails.length) % currentTrails.length);
+      const target    = Math.floor(Math.random() * pool.length);
+      const t0        = performance.now();
+      const DURATION  = 5000;
+      const startIdx  = Math.floor(Math.random() * pool.length);
+      const rounds    = 7 + Math.floor(Math.random() * 3);
+      const total     = rounds * pool.length + ((target - startIdx + pool.length) % pool.length);
+      let lastIdx = -1;
 
-      let lastIndex = -1;
+      (function tick(now) {
+        const p = Math.min((now - t0) / DURATION, 1);
+        const e = 1 - Math.pow(1 - p, 4);       // easeOutQuart
+        const step = Math.floor(e * total);
+        const idx  = (startIdx + step) % pool.length;
+        cdownEl.textContent = Math.max(0, (DURATION - (now - t0)) / 1000).toFixed(1);
 
-      function tick(now) {
-        const progress = Math.min((now - start) / duration, 1);
-        // easeOutQuart
-        const eased = 1 - Math.pow(1 - progress, 4);
-        const step = Math.floor(eased * totalSteps);
-        const index = (startIndex + step) % currentTrails.length;
-        countdown.textContent = `${Math.max(0, (duration - (now - start)) / 1000).toFixed(1)}`;
+        if (idx !== lastIdx) { blip(); lastIdx = idx; renderReel(idx); }
 
-        if (index !== lastIndex) {
-          playBlip();
-          lastIndex = index;
-          renderReel(index);
-        }
+        if (p < 1) { requestAnimationFrame(tick); return; }
 
-        if (progress < 1) {
-          requestAnimationFrame(tick);
-          return;
-        }
-
-        renderReel(targetIndex);
-        const winner = currentTrails[targetIndex];
-        isRolling = false;
-        drawBtn.disabled = false;
-        shuffleBtn.disabled = false;
-        drawBtn.textContent = "再开一局 RETRY";
+        renderReel(target);
+        const winner = pool[target];
+        rolling = false;
+        drawBtn.disabled = shuffleBtn.disabled = false;
+        drawBtn.textContent = "再抽一次";
         reelWrap.classList.remove("rolling");
-        machine.classList.remove("shake");
-        countdown.textContent = "0.0";
-        statusText.textContent = "传送门已锁定：本周路线掉落！";
-        
-        playWin();
-        showResult(winner);
-        burstConfetti();
-      }
-
-      requestAnimationFrame(tick);
+        cdownEl.textContent = "0.0";
+        statusEl.textContent = "天命已定，本周路线锁定！";
+        win(); showResult(winner); burst();
+      })(t0);
     }
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+    /* ── Confetti ── */
+    function resize() {
+      canvas.width  = innerWidth  * devicePixelRatio;
+      canvas.height = innerHeight * devicePixelRatio;
+      canvas.style.width  = innerWidth  + "px";
+      canvas.style.height = innerHeight + "px";
       ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
     }
 
-    function burstConfetti() {
-      const colors = ["#39ff14", "#0ff", "#ff00ff", "#ffea00", "#ff073a", "#ffffff"];
-      particles = Array.from({ length: 200 }, () => ({
-        x: window.innerWidth / 2,
-        y: window.innerHeight * 0.5,
-        vx: (Math.random() - 0.5) * 30,
-        vy: Math.random() * -20 - 5,
-        size: Math.random() * 10 + 5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        life: Math.random() * 60 + 80,
-        rotate: Math.random() * Math.PI,
-        dr: (Math.random() - 0.5) * 0.5
+    function burst() {
+      const cols = ["#f5c842","#4ee8c8","#9d7dff","#ff6b6b","#fff","#e8973a"];
+      particles = Array.from({ length: 220 }, () => ({
+        x:  innerWidth  * .5,
+        y:  innerHeight * .45,
+        vx: (Math.random() - .5) * 26,
+        vy: Math.random() * -18 - 4,
+        sz: Math.random() * 9 + 3,
+        c:  cols[Math.random() * cols.length | 0],
+        life: 70 + Math.random() * 60,
+        rot: Math.random() * Math.PI,
+        dr: (Math.random() - .5) * .4
       }));
-
-      if (!animationFrame) animateConfetti();
+      if (!raf) animate();
     }
 
-    function animateConfetti() {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      particles = particles.filter((p) => p.life > 0);
-
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.5; // gravity
-        p.vx *= 0.98; // friction
-        p.life -= 1;
-        p.rotate += p.dr;
-
+    function animate() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += .45; p.vx *= .985;
+        p.life -= 1; p.rot += p.dr;
         ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotate);
-        ctx.globalAlpha = Math.max(p.life / 100, 0);
-        ctx.fillStyle = p.color;
-        // Draw pixelated confetti (squares)
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.max(p.life / 90, 0);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz * .55);
         ctx.restore();
       });
-
-      if (particles.length) {
-        animationFrame = requestAnimationFrame(animateConfetti);
-      } else {
-        animationFrame = null;
-        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      }
+      if (particles.length) { raf = requestAnimationFrame(animate); }
+      else { raf = null; ctx.clearRect(0, 0, innerWidth, innerHeight); }
     }
 
-    drawBtn.addEventListener("click", roll);
+    drawBtn.addEventListener("click", () => { getAudio(); spin(); });
     shuffleBtn.addEventListener("click", () => {
-      initAudio();
-      if (isRolling) return;
-      shuffleBtn.classList.add("pressed");
-      setTimeout(() => shuffleBtn.classList.remove("pressed"), 200);
-      playTone(300, 'sawtooth', 0.1, 0.1);
-      currentTrails = shuffle(currentTrails);
+      if (rolling) return;
+      getAudio();
+      tone(260, "sawtooth", .1, .07);
+      pool = shuffleArr(pool);
       renderReel(0);
-      countdown.textContent = "5.0";
-      statusText.textContent = "卡池已重洗，等待队长开局";
+      cdownEl.textContent = "5.0";
+      statusEl.textContent = "牌堆已洗，点击开始抽签";
     });
+    addEventListener("resize", resize);
 
-    window.addEventListener("resize", resizeCanvas);
-
-    // Initial setup
-    resizeCanvas();
+    resize();
     renderReel(0);
   </script>
 </body>
